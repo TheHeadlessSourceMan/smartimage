@@ -1,0 +1,44 @@
+﻿[PyScripter]
+Version=3.4.1.0
+
+[Project]
+ClassName=TProjectRootNode
+StoreRelativePaths=TRUE
+ShowFileExtensions=FALSE
+
+[Project\ChildNodes\Node0]
+ClassName=TProjectFilesNode
+
+[Project\ChildNodes\Node1]
+ClassName=TProjectRunConfiguationsNode
+
+[Project\ChildNodes\Node1\ChildNodes\Node0]
+ClassName=TProjectRunConfiguationNode
+Name=samples/collage
+
+[Project\ChildNodes\Node1\ChildNodes\Node0\RunConfig]
+ScriptName=C:\backed_up\computers\formats\smartimage\smartimage.py
+EngineType=peRemote
+ReinitializeBeforeRun=TRUE
+Parameters=samples\collage --image
+WorkingDir=$[ActiveScript-Dir]
+WriteOutputToFile=FALSE
+OutputFileName=$[ActiveScript-NoExt].log
+AppendToFile=FALSE
+
+[Project\ChildNodes\Node1\ChildNodes\Node0\RunConfig\ExternalRun]
+Caption=External Run
+Description=Run script using an external Python Interpreter
+ApplicationName=$[PythonExe-Short]
+Parameters=$[ActiveScript-Short]
+WorkingDirectory=$[ActiveScript-Dir]
+
+[Project\ChildNodes\Node1\ChildNodes]
+Count=1
+
+[Project\ChildNodes]
+Count=2
+
+[Project\ExtraPythonPath]
+Count=0
+

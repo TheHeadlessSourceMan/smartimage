@@ -1,0 +1,6 @@
+<smartimage id="0">
+	<image id="1" file="../rice.jpg" x="100" y="100" w="760" h="429" />
+	<modifier id="2" type="gaussian_blur" blurRadius="30">
+		<image id="3" file="../rice.jpg" />
+	</modifier>
+</smartimage>

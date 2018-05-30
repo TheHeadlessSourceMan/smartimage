@@ -1,0 +1,5 @@
+<smartimage>
+	<group rotate="-45">
+		<image rotate="45" file="../rice.jpg" />
+	</group>
+</smartimage>

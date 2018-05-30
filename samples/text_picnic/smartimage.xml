@@ -1,0 +1,4 @@
+<smartimage id="0">
+	<image id="1" file="../picnic.jpg" />
+	<text id="2" font="Hi Melody" x="10" y="-10" color="#ff00ff">Hello world</text>
+</smartimage>

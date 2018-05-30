@@ -1,0 +1,16 @@
+<smartimage name="smartimage" >
+	<!--group name="photos" rotate="17"-->
+		<text name="caption" x="10" y="690" w="820" verticalAlign="center" align="center" font="Permanent Marker">World's worst chaperone!</text>
+		<modifier type="shadow" blurRadius="5" modifierOpacity="0">
+			<image name="polaroid frame" file="polaroid.png"/>
+			<image name="reflection" file="surface_reflection.png" opacity="0.5" blendMode="screen"/>
+			<image name="photo" file="photo.png" mask="polaroid_mask.png"/>
+		</modifier>
+		<!--group name="obscured photos" rotate="-8"-->
+			<!--image id="1" name="polaroid frame" file="polaroid.png"/-->
+			<!--image name="polaroid frame" rotate="-8" file="polaroid.png"/-->
+			<!--solid name="polaroid black background" w="@1" h="@1" color="#aaaaaa" mask="polaroid_mask.png"/-->
+		<!--/group-->
+	<!--/group-->
+	<image name="travel background" file="background.png"/>
+</smartimage>

@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+targetNamespace="https://www.w3schools.com"
+xmlns="https://www.w3schools.com"
+elementFormDefault="qualified">
+
+<!--
+<xs:element name="sample">
+	<xs:complexType>
+		<xs:element name="to" type="xs:string" default="semprini" use="required">
+			<xs:attribute name="xxx" type="yyy"/> 
+		</xs:element>
+	</xs:complexType>
+</xs:element>
+-->
+
+<!-- attribute type definitions -->
+<xs:simpleType name="colorType">
+	<xs:restriction base="xs:string">
+		<xs:pattern value="[#]?[0-9A-Fa-f]*"/>
+	</xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="sizeType">
+	<xs:restriction base="xs:string">
+		<xs:pattern value="[0-9]+(px|in|mm)?"/>
+	</xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="floatType">
+	<xs:restriction base="xs:decimal">
+	</xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="percentType">
+	<xs:restriction base="xs:string">
+		<xs:pattern value="[-]?[0-9.]+([%])?"/>
+	</xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="boolType">
+	<xs:restriction base="xs:string">
+		<xs:pattern value="1|[Tt](rue)?|[Yy](es)?|0|[Ff](alse)?|[Nn](o)?"/>
+	</xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="blendModeType">
+	<xs:restriction base="xs:string">
+		<xs:enumeration value="normal"/>
+		<xs:enumeration value="darker"/>
+		<xs:enumeration value="difference"/>
+		<xs:enumeration value="add"/>
+		<xs:enumeration value="add_mod"/>
+		<xs:enumeration value="multiply"/>
+		<xs:enumeration value="and"/>
+		<xs:enumeration value="or"/>
+		<xs:enumeration value="screen"/>
+		<xs:enumeration value="subtract"/>
+		<xs:enumeration value="subtract_mod"/>
+	</xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="modifierType">
+	<xs:restriction base="xs:string">
+		<xs:enumeration value="shadow" />
+		<xs:enumeration value="brightness" />
+		<xs:enumeration value="contrast" />
+		<xs:enumeration value="saturation" />
+		<xs:enumeration value="rotate" />
+		<xs:enumeration value="blur" />
+		<xs:enumeration value="gaussian_blur" />
+		<xs:enumeration value="box_blur" />
+		<xs:enumeration value="unsharp_mask" />
+		<xs:enumeration value="contour" />
+		<xs:enumeration value="detail" />
+		<xs:enumeration value="edge_enhance" />
+		<xs:enumeration value="edge_enhance_more" />
+		<xs:enumeration value="emboss" />
+		<xs:enumeration value="edge_detect" />
+		<xs:enumeration value="smooth" />
+		<xs:enumeration value="smooth_more" />
+		<xs:enumeration value="sharpen" />
+		<xs:enumeration value="invert" />
+		<xs:enumeration value="flip" />
+		<xs:enumeration value="mirror" />
+		<xs:enumeration value="posterize" />
+		<xs:enumeration value="solarize" />
+	</xs:restriction>
+</xs:simpleType>
+		
+<!-- attribute definitions -->
+<attributeGroup name="layerAttributes">
+	<xs:attribute name="id" type="xs:int" use="required" />
+	<xs:attribute name="name" type="xs:string" use="required" />
+	<xs:attribute name="opacity" type="percentType" default="1.0" />
+	<xs:attribute name="blendMode" default="normal" type="blendModeType" />
+	<xs:attribute name="roi" type="xs:string" />
+	<xs:attribute name="mask" type="xs:string" />
+	<xs:attribute name="rotate" type="xs:int" />
+	<xs:attribute name="visible" type="boolType" />
+	<xs:attribute name="isChild" type="boolType" />
+	<xs:attribute name="relativeTo" type="xs:string" />
+	<xs:attribute name="x" type="sizeType" />
+	<xs:attribute name="y" type="sizeType" />
+	<xs:attribute name="w" type="sizeType" />
+	<xs:attribute name="h" type="sizeType" />
+</attributeGroup>
+	
+<!-- element definitions -->
+
+<xs:element name="smartimage" type="layerContents">
+	<attributeGroup ref="layerAttributes" />
+	<xs:element name="variable"> 
+		<xs:attribute name="name" type="xs:string" use="required"/>
+		<xs:attribute name="type" type="xs:string" default="text"/>
+		<xs:attribute name="description" type="xs:string"/>
+		<xs:attribute name="default" type="xs:string"/>
+	</xs:element>
+	<xs:element name="plugin" type="scriptContents">
+		
+	</xs:element>
+</xs:element>
+
+<xs:complexType name="layerContents">
+	<xs:choice minOccurs="0" maxOccurs="unbounded">
+		<xs:element name="group" type="layerContents">
+			<attributeGroup ref="layerAttributes" />
+		</xs:element>
+		<xs:element name="link" type="layerContents">
+			<attributeGroup ref="layerAttributes" />
+			<xs:attribute name="ref" type="xs:string" use="required"/>
+		</xs:element>
+		<xs:element name="image" type="layerContents">
+			<attributeGroup ref="layerAttributes" />
+			<xs:attribute name="file" type="xs:string" use="required"/>
+		</xs:element>
+		<xs:element name="text" type="layerContents">
+			<attributeGroup ref="layerAttributes" />
+			<xs:attribute name="font" type="xs:string" use="required"/>
+			<xs:attribute name="fontSize" type="xs:string" use="required"/>
+			<xs:attribute name="typeFace" type="xs:string"/>
+			<xs:attribute name="color" type="colorType" default="#000000"/>
+			<xs:attribute name="anchor" type="xs:string"/>
+			<xs:attribute name="lineSpacing" type="xs:string"/>
+			<xs:attribute name="align" type="xs:string"/>
+			<xs:attribute name="verticalAlign" type="xs:string"/>
+		</xs:element>
+		<xs:element name="modifier" type="layerContents">
+			<attributeGroup ref="layerAttributes" />
+			<xs:attribute name="type" type="modifierType" use="required"/>
+			<xs:attribute name="amount" type="percentType" default="1.0"/>
+			<xs:attribute name="modifierOpacity" type="percentType" default="1.0"/>
+			<xs:attribute name="blurRadius" type="floatType" default="0"/>
+			<xs:attribute name="threshold" type="floatType" default="0"/>
+		</xs:element>
+		<xs:element name="solid" type="layerContents">
+			<attributeGroup ref="layerAttributes" />
+			<xs:attribute name="color" type="colorType" default="#000000"/>
+		</xs:element>
+		<xs:any/>
+	</xs:choice>
+</xs:complexType>
+
+
+</xs:schema> 

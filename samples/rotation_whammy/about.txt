@@ -1,0 +1,5 @@
+There is arises a tricky situation with rotated images where:
+	1) you rotate it, and it looks right
+	2) then you rotate back and the corners are missing where it went off the page!
+	
+In this example, if all is coded right, you should have the simple, plain old, dull image with no black bars, nor missing corners.
