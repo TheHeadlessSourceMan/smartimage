@@ -5,6 +5,7 @@ This is a very lightweight UI for editing images.  You'll be done and off to Zan
 """
 import os
 import tkinter as tk
+import tkMessageBox as messagebox
 import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 from smartimage import *
@@ -20,23 +21,23 @@ class FileWatcher(object):
 			filename=filename+os.sep+'smartimage.xml'
 		self.filename=filename
 		self.lastModified=os.path.getmtime(filename)
-		
+
 	def isModified(self):
 		modified=os.path.getmtime(self.filename)
 		hasChanged=modified!=self.lastModified
 		self.lastModified=modified
 		return hasChanged
-	
+
 	def _watchFile(filename,callback):
 		while True:
 			time.sleep(0.25)
 			if self.isModified():
 				callback(filename)
-			
+
 	def watchFile(filename,callback):
 		"""
 		Uses a thread to watch for file changes
-		
+
 		returns a thread object
 		"""
 		import threading
@@ -44,7 +45,7 @@ class FileWatcher(object):
 		t.daemon=True
 		t.start()
 		return t
-			
+
 
 class TreeviewPanel(tk.Frame):
 	def __init__(self, master, smartimage,viewer=None):
@@ -68,7 +69,7 @@ class TreeviewPanel(tk.Frame):
 		xScrollbar.grid(row=1,column=0,sticky=tk.EW)
 		self.grid()
 		self.setSmartimage(smartimage)
-		
+
 	def setSmartimage(self,smartimage):
 		if not isinstance(smartimage,SmartImage):
 			smartimage=SmartImage(smartimage)
@@ -85,7 +86,11 @@ class TreeviewPanel(tk.Frame):
 		self.tree.focus(iid)
 
 	def thumbnailForLayer(self,layer):
-		image=layer.renderImage()
+		try:
+			image=layer.renderImage()
+		except Exception,e:
+			print e
+			return self.thumbnailBG
 		if image==None:
 			image=self.thumbnailBG
 		else:
@@ -96,7 +101,7 @@ class TreeviewPanel(tk.Frame):
 				bg.alpha_composite(image)
 				image=bg
 		return image
-		
+
 	def populate(self,parent,layer):
 		for child in layer.children:
 			iid=child.id
@@ -105,25 +110,26 @@ class TreeviewPanel(tk.Frame):
 			self._treeImages[iid]=photoImage # this is necessary so photoImage is not deleted
 			oid=self.tree.insert(parent,'0',iid,text=child.name,open=False,image=photoImage)
 			self.populate(oid,child)
-			
+
 	def OnClick(self, event):
 		item = self.tree.identify('item', event.x, event.y)
 		if self.viewer!=None:
 			self.viewer.setImage(self.smartimage.imageByRef('@'+item))
-	
+
 	def OnDoubleClick(self, event):
 		item = self.tree.identify('item', event.x, event.y)
 		if self.viewer!=None:
 			self.viewer.setImage(self.smartimage.imageByRef('@'+item))
-		
+
 	def onFileChanged(self,filename):
 		self.setSmartimage(filename)
-		
-			
+
+
 class ImagePanel(tk.Frame):
-	def __init__(self, master, smartimage):
+	def __init__(self,master,smartimage,allowRaise):
+		self.allowRaise=allowRaise
 		self.smartimage=smartimage
-		tk.Frame.__init__(self, master)
+		tk.Frame.__init__(self,master)
 		frame=self
 		self.canvas=tk.Canvas(frame,bg='#FFFFFF',width=300,height=300,scrollregion=(0,0,500,500))
 		hbar=tk.Scrollbar(frame,orient=tk.HORIZONTAL)
@@ -136,10 +142,17 @@ class ImagePanel(tk.Frame):
 		self.canvas.config(xscrollcommand=hbar.set,yscrollcommand=vbar.set)
 		self.canvas.pack(side=tk.LEFT,expand=True,fill=tk.BOTH)
 		self.setImage(smartimage)
-	
+
 	def setImage(self,image):
 		if isinstance(image,Layer):
-			image=image.renderImage()
+			if self.allowRaise:
+				image=image.renderImage()
+			else:
+				try:
+					image=image.renderImage()
+				except Exception,e:
+					messagebox.showerror(e.__class__.__name__,str(e))
+					return
 		if image.mode=='RGBA':
 			bg=backgrounds.checkerboard(image.width,image.height,color1=(102,102,102,255),color2=(153,153,153,255))
 			bg.alpha_composite(image)
@@ -149,22 +162,22 @@ class ImagePanel(tk.Frame):
 		imagesprite=self.canvas.create_image(0,0,image=self.photoImage,anchor=tk.NW)
 		self.canvas.config(scrollregion=(0,0,image.width,image.height))
 		#self.canvas.config(width=image.width,height=image.height)
-	
+
 	def setSmartimage(self,smartimage):
 		if not isinstance(smartimage,SmartImage):
 			smartimage=SmartImage(smartimage)
-		self.smartimage=smartimage	
+		self.smartimage=smartimage
 		self.setImage(smartimage)
-		
+
 	def onFileChanged(self,filename):
 		self.setSmartimage(filename)
 
-		
+
 class EditPanel(tk.Frame):
 	"""
 	This is a very lightweight UI for editing images.  You'll be done and off to Zanzibar before Photoshop could even boot up!
 	"""
-	def __init__(self,master,smartimage):
+	def __init__(self,master,smartimage,allowRaise):
 		tk.Frame.__init__(self, master)
 		self.smartimage=smartimage
 		self.imageToolSplit=tk.PanedWindow(master,orient=tk.HORIZONTAL)
@@ -172,23 +185,23 @@ class EditPanel(tk.Frame):
 		self.imageToolSplit.config(handlesize=10)
 		self.imageToolSplit.config(sashwidth=5)
 		self.imageToolSplit.config(sashrelief=tk.RAISED)
-		self.imagePane=ImagePanel(self.imageToolSplit,smartimage)
+		self.imagePane=ImagePanel(self.imageToolSplit,smartimage,allowRaise)
 		self.imageToolSplit.add(self.imagePane,stretch="always")
 		self.treeviewPanel=TreeviewPanel(self.imageToolSplit,smartimage,viewer=self.imagePane)
 		self.imageToolSplit.add(self.treeviewPanel)
-		
+
 	def setSmartimage(self,smartimage):
 		if not isinstance(smartimage,SmartImage):
 			smartimage=SmartImage(smartimage)
-		self.smartimage=smartimage	
+		self.smartimage=smartimage
 		self.imagePane.setSmartimage(smartimage)
 		self.treeviewPanel.setSmartimage(smartimage)
-		
+
 	def onFileChanged(self,filename):
 		self.setSmartimage(filename)
-		
 
-def runUI(smartimage,mode='edit'):
+
+def runUI(smartimage,mode='edit',allowRaise=False):
 	"""
 	mode: 'edit', 'view', 'treeview'
 	"""
@@ -205,9 +218,9 @@ def runUI(smartimage,mode='edit'):
 	if mode=='treeview':
 		app = TreeviewPanel(root,smartimage)
 	elif mode=='view':
-		app = ImagePanel(root,smartimage)
+		app = ImagePanel(root,smartimage,allowRaise)
 	elif mode=='edit':
-		app = EditPanel(root,smartimage)
+		app = EditPanel(root,smartimage,allowRaise)
 	else:
 		raise Exception('ERR: unknown ui mode "'+mode+'"')
 	# notify the ui whenever the file on disk changes
@@ -234,18 +247,22 @@ if __name__ == '__main__':
 	if len(sys.argv)<2:
 		printhelp=True
 	else:
+		allowRaise=False
 		mode='edit'
 		for arg in sys.argv[1:]:
 			if arg.startswith('-'):
 				arg=[a.strip() for a in arg.split('=',1)]
 				if arg[0] in ['-h','--help']:
 					printhelp=True
+				elif arg[0]=='--allowRaise':
+					allowRaise=True
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
-				runUI(arg,mode)
+				runUI(arg,mode,allowRaise)
 	if printhelp:
 		print 'Usage:'
 		print '  tkLightweightUI.py file.simg [options]'
 		print 'Options:'
+		print '   --allowRaise ........ allow image errors to kick out of application'
 		print '   --mode .............. ui mode (edit, view, treeview)'

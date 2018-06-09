@@ -23,11 +23,11 @@ class Link(Layer):
 		self.xml.attrib['ref']=ref
 		self.docRoot.dirty=True
 
-	def _getProperty(self,name,default=None):
+	def _getProperty(self,name,default=None,allowReplacements=True,allowLinks=True):
 		if name in self.xml.attrib:
 			val=self.xml.attrib[name]
 		else:
-			val=self.target._getProperty(name,default)
+			val=self.target._getProperty(name,default,allowReplacements,allowLinks)
 		return val
 
 	@property

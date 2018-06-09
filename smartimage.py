@@ -80,7 +80,7 @@ class SmartImage(Layer):
 		ref - one of:
 			filename
 			#id
-			
+
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
 		if ref==None:
@@ -181,7 +181,7 @@ class SmartImage(Layer):
 				ret=True
 				break
 		return ret
-			
+
 	def varUi(self,force=True):
 		"""
 		open a user interface to edit the variables

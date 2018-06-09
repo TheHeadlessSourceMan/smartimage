@@ -49,15 +49,17 @@ function showHide(node,shouldShow) {
 <body class="indent">
 <name>smartimage</name>
 <description>
-Non-destructively constructed images that can be used as templates and rescale smartly to fit different media.
+A format and reference implementation for multilayer images that can be used as templates and rescale smartly to fit different media.
 </description>
 
 <h2>Features:</h2>
 <div class='indent'>
+	<li>Complete vector and raster <a href="https://en.wikipedia.org/wiki/Scene_graph">scene graph</a></li>
 	<li>Works great with zipped, or non-zipped resources.</li>
 	<li>Automatic heatmap-based rescaling. NICE!</li>
 	<li>Solid color layers.</li>
 	<li>Image layers.</li>
+	<li>Entirely "non-destructive" in that all layers and effects can be altered after-the-fact.</li>
 	<li>Modifier layers (not all modifiers finalized/tested).</li>
 	<li>Text layers.</li>
 	<li>Any file reference can be replaced with #layerId</li>
@@ -73,9 +75,12 @@ Non-destructively constructed images that can be used as templates and rescale s
 <h2>TODO:</h2>
 <div class='indent'>
 	<li>need to have layers that extend beyond image for things like rotation</li>
+	<li>convert all layers from psd using <a href="https://github.com/kyamagu/psd-tools2">psd-tools</a></li>
 	<li>need to translate font friendly names to file names "Viner Hand ITC Regular" -&gt; "VINERITC.TTF"</li>
 	<li>may want modifiers to be less generic?</li>
+	<li>modifiers should take the form/idiom of <a href="https://www.w3.org/Graphics/SVG/IG/resources/svgprimer.html#filters">SVG filters</a></li>
 	<li>gimp/photoshop plugin to read this format?</li>
 	<li>dragdrop handler that uses auto-assign variables</li>
+	<li><a href="https://www.w3.org/Graphics/SVG/">SVG</a> loading</li>
 	</body>
 </html>

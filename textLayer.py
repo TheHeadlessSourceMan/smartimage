@@ -25,7 +25,7 @@ def fontSquirrelGet(fontName,cachedir):
 	except urllib2.URLError,e:
 		print url
 		print e
-		
+
 def fontSquirrelPage(fontName,cachedir):
 	fontName=fontName.replace(' ','-')
 	url='https://www.fontsquirrel.com/fonts/'+fontName
@@ -38,7 +38,7 @@ def fontSquirrelPage(fontName,cachedir):
 		print url
 		print e
 	return ret
-		
+
 def fontSquirrelLicense(fontName,cachedir):
 	"""
 	Retrieve the license for the given font as html
@@ -48,15 +48,15 @@ def fontSquirrelLicense(fontName,cachedir):
 		return None
 	page=lxml.etree(page)
 	return lxml.xpath('//*[@id="panel_eula"]')[0]
-	
+
 
 def googleFontsGet(fontName,cachedir):
 	font=None
 	# try to download from google fonts
-	fontcache=cachedir+self.fontName
+	fontcache=cachedir+fontName
 	if not os.path.exists(fontcache):
 		# download the info file if we don't have one
-		url='https://fonts.googleapis.com/css?family='+urllib.quote_plus(self.fontName)
+		url='https://fonts.googleapis.com/css?family='+urllib.quote_plus(fontName)
 		req=urllib2.Request(url)
 		try:
 			response=urllib2.urlopen(req)
@@ -74,17 +74,18 @@ def googleFontsGet(fontName,cachedir):
 		fontcache=cachedir+urllib.quote_plus(url)
 		if not os.path.exists(fontcache):
 			# download the real font if we don't already have it
-			req = urllib2.Request(url)
+			req=urllib2.Request(url)
 			try:
-				response = urllib2.urlopen(req)
+				response=urllib2.urlopen(req)
 				f=open(fontcache,'wb')
 				f.write(response.read())
 				f.close()
 			except urllib2.URLError,e:
 				print url
 				print e
-		self._font=ImageFont.truetype(fontcache,self.fontSize,self.typeFace)
-	
+		font=fontcache
+	return font
+
 def downloadFont(fontName):
 	cachedir=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep+'font_cache'+os.sep
 	font=googleFontsGet(fontName,cachedir)
@@ -176,7 +177,7 @@ class TextLayer(Layer):
 			except IOError:
 				self._font=None
 		if self._font==None:
-			self._font=downloadFont(self.fontName)
+			self._font=ImageFont.truetype(downloadFont(self.fontName),self.fontSize,self.typeFace)
 		return self._font
 
 	@property
@@ -185,7 +186,7 @@ class TextLayer(Layer):
 		d=ImageDraw.Draw(img)
 		d.multiline_text((0,0),self.text,255,self.font,self.anchor,self.lineSpacing,self.align)
 		return img
-			
+
 	@property
 	def image(self):
 		text=self.text

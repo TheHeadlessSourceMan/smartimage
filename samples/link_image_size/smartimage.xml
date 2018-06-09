@@ -1,0 +1,7 @@
+<smartimage id="0">
+	<solid name="top bar" color="#000000" w="@1" h="100"/>
+	<group name="move stuff down bar height" y="100">
+		<image name="image" id="1" file="../rice.jpg"/>
+		<solid name="bottom bar" color="#000000" w="@1" h="100" y="@1.h"/>
+	</group>
+</smartimage>

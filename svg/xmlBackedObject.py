@@ -44,9 +44,6 @@ class XmlBackedObject(object):
 						value=default
 						if name in xob.xml.attrib:
 							value=xob.xml.attrib[name]
-					# width and height can be auto
-					if name in ['w','h'] and value in ('0','auto',None):
-						value=getattr(xob,name)
 		return value
 
 	def _getProperty(self,name,default=None,allowReplacements=True,allowLinks=True):
@@ -61,13 +58,13 @@ class XmlBackedObject(object):
 		value=default
 		if name in self.xml.attrib:
 			value=self.xml.attrib[name]
-		value=self._dereference(name,value,default,allowReplacements,allowLinks,['@'+self.id+'.'+name])
+		value=self._dereference(name,value,default,allowReplacements,allowLinks,['#'+self.id+'.'+name])
 		return value
-
+		
 	def _getPropertyPercent(self,name,default=1.0,allowReplacements=True,allowLinks=True):
 		"""
 		gets a property, always returning a decimal percent (where 1.0 = 100%)
-
+		
 		name - retrieve this property from the xml attributes
 		default - if there is no attribute, return this instead (can be a link or replacement)
 		Optional:
@@ -77,7 +74,7 @@ class XmlBackedObject(object):
 		"""
 		value=self._getProperty(name,default,allowReplacements,allowLinks)
 		if type(value) in [str,unicode]:
-			if len(value)<1:
+			if len(value)<1:	
 				value=default
 			else:
 				value=value.strip()

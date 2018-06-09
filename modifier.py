@@ -77,7 +77,7 @@ def convolve(img,matrix,add,divide,edge):
 	k=ImageFilter.Kernel((size,size),matrix,scale=divide,offset=add)
 	img=img.filter(k)
 
-	
+
 def distort(img,points,r=1):
 	"""
 	morph an image to fit the given points
@@ -85,8 +85,8 @@ def distort(img,points,r=1):
 	data=((f[0],f[1]) for f,t in points)
 	img.transform(size,Image.MESH,data)
 
-	
-	
+
+
 class Modifier(Layer):
 	"""
 	This is a modifier layer such as blur, sharpen, posterize, etc
@@ -110,34 +110,34 @@ class Modifier(Layer):
 			brightness,contrast,rotate,sharpen,unsharp_mask
 		"""
 		return _getPropertyPercent('amount',1.0)
-		
+
 	@property
 	def edge(self):
 		"""
 		treatment for edges
 			options: mirror,repeat,clamp,[color]
-			
+
 		useful for:
 			convolve, expand_border, others?
 		"""
 		return _getProperty('edge','mirror')
-		
+
 	@property
 	def add(self):
 		"""
 		add a constant to the convolved value
 		useful, for instance, in shifting negative emboss values
-		
+
 		useful for:
 			convolve
 		"""
 		return float(_getProperty('add',0))
-		
+
 	@property
 	def divide(self):
 		"""
 		divide the convolved value by a constant
-		
+
 		useful for:
 			convolve
 		"""
@@ -145,12 +145,12 @@ class Modifier(Layer):
 		if divide==0:
 			divide=None
 		return divide
-		
+
 	@property
 	def matrix(self):
 		"""
 		a 3x3 or 5x5 convolution matrix
-		
+
 		useful for:
 			convolve
 		"""
@@ -176,19 +176,19 @@ class Modifier(Layer):
 	def channels(self):
 		"""
 		only apply the effect to the given channels
-		
+
 		useful for:
 			convolve,others?
 		"""
 		return _getProperty('channels','rgba').lower()
-		
+
 	@property
 	def modifierOpacity(self):
 		"""
 		the opacity of the modifier alone, for instance drop shadows
 		"""
-		return _getPropertyPercent('modifierOpacity',1.0)
-		
+		return self._getPropertyPercent('modifierOpacity',1.0)
+
 	@property
 	def blurRadius(self):
 		"""
@@ -233,7 +233,7 @@ class Modifier(Layer):
 			final.alpha_composite(img,dest=(max(-offsX,0),max(-offsY,0)))
 			img=final
 		elif type=='convolve':
-			matrix=self.matrix(),matrix)
+			matrix=self.matrix()
 			ImageFilter.Kernel((len(matrix),len(matrix)),matrix,scale=self.divide,offset=self.add)
 		elif type=='autocrop':
 			# the idea is you cut off as many rows from each side that are all alpha=0

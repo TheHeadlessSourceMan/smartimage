@@ -39,11 +39,11 @@ class RenderingContext(object):
 		else:
 			self.cur_x+=x
 			self.cur_y+=y
-		
+
    	def renderImage(self,layer):
 		"""
 		render an image from the layer image and all of its children
-		
+
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
 		# loop prevention
@@ -59,30 +59,37 @@ class RenderingContext(object):
 		self.log('creating',layer.name)
 		image=layer.image
 		for childLayer in layer.children:
-			childImage=childLayer.renderImage(childLayer)
-			image=composite(image,childImage,
-				opacity=childLayer.opacity,blendMode=childLayer.blendMode,mask=childLayer.mask,position=childLayer.location,
-				resize=True)
+			childImage=childLayer.renderImage(self)
+			image=composite(childImage,image,
+				opacity=childLayer.opacity,blendMode=childLayer.blendMode,mask=childLayer.mask,
+				position=childLayer.location,resize=True)
+			self.log('adding',childLayer.name,'at',childLayer.location)
 		if layer.rotate%360!=0:
 			self.log('rotating',layer.name)
-			bounds=Bounds(image.width,image.height)
+			bounds=Bounds(0,0,image.width,image.height)
 			bounds.rotateFit(layer.rotate)
-			image=extendImageCanvas(image,(int(bounds.w),int(bounds.h)))
+			image=extendImageCanvas(image,bounds)
 			image=image.rotate(layer.rotate)
 		self.log('info',layer.name,'mode='+image.mode,'bounds='+str((0,0,image.width,image.height)))
 		self.log('finished',layer.name)
 		del self.visitedLayers[-1]
 		return image
-		
 
-class Layer(XmlBackedObject,BoundsObject):
+
+class Layer(XmlBackedObject,Bounds):
 	"""
 	The base class for image layers
 	"""
 	def __init__(self,docRoot,parent,xml):
-		XmlBackedObject.__init__(self,docRoot,xml)
+		XmlBackedObject.__init__(self,docRoot,parent,xml)
 		self.parent=parent
 		self._lastRenderedImage=None
+
+	def __str__(self):
+		name=self.name
+		if len(name)>0:
+			return 'Layer '+str(self.id)+' - "'+name+'"'
+		return 'Layer '+str(self.id)
 
 	def getLayer(self,id):
 		l=None
@@ -139,6 +146,7 @@ class Layer(XmlBackedObject,BoundsObject):
 			else:
 				w=0
 		else:
+			print w
 			w=float(w)
 		return w
 	@property
@@ -208,7 +216,7 @@ class Layer(XmlBackedObject,BoundsObject):
 		else:
 			raise Exception('ERR: unknown element, "'+xml.tag+'"')
 		return child
-		
+
 	@property
 	def children(self):
 		"""
@@ -261,10 +269,9 @@ class Layer(XmlBackedObject,BoundsObject):
 		"""
 		render this layer to a final image
 
-		target - 'image','mask', or 'roi'
 		renderContext - used to keep track for child renders
 			(Used internally, so no need to specify this)
-			
+
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
 		if self.docRoot.cacheRenderedLayers and self.dirtyBranch==False and self._lastRenderedImage!=None:
