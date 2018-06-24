@@ -1,31 +1,27 @@
-<plugin name="">
-	<variable name="x" default="" /> <!-- same as forms -->
+<!-- notes -->
+	<!-- what about adopting some stuff from apache ant build scripts for the procedure? -->
+	<!-- also, how does this relate to photoshop actionscripts? -->
+	<!-- can we make a tool to convert an existing actions https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/ to a procedure? -->
+	<!-- follow ant-contrib tags http://ant-contrib.sourceforge.net/tasks/tasks/index.html -->
+	<!-- <foreach> - http://ant-contrib.sourceforge.net/tasks/tasks/foreach.html -->
 	
-	aluminum+graphite teg
+<!--- useage -->
+<run plugin="name" x="value1" />
+
+<!--- implementation -->
+<plugin name="dosomething"> <!-- a plugin takes n# children (called @children in variables) and returns a single image -->
+	<variable name="x" default="" /> <!-- same as forms -->
 	
 	<!-- gimp has a really good implementation with all edges except mirror
 		https://docs.gimp.org/en/plug-in-convmatrix.html
 		-->
-	<convolution matrix="[]" channels="RGBA" normalize="false" edge="mirror">
-	
-	<!-- what about adopting some stuff from apache ant build scripts for the procedure? -->
-	<!-- also, how does this relate to photoshop actionscripts? -->
-	<!-- can we make a tool to convert an existing actions https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/ to a procedure? -->
-	
-	<!-- TODO: follow ant-contrib tags http://ant-contrib.sourceforge.net/tasks/tasks/index.html
-		<if>
-		<foreach> - http://ant-contrib.sourceforge.net/tasks/tasks/foreach.html
-		<for>
-		<switch>
-	-->
-	<class name="MyClass">
-		<variable name="property1" />
-		<function name="doSomething">
-			<variable name="x" default="" /> <!-- all immediate child variables are the same as parameters -->
-			<for name="i" start="" end="" step="">
+	<convolve matrix="[]" channels="RGBA" normalize="false" edge="mirror" />
+
+	<foreach name="" in="@children">
+		<for name="i" start="" end="" step="">
 				<if arg1="@name" op="=" arg2="hello world">
 					<then>
-						<set variable="x" value="@name"/>
+						<set variable="x" value="@name" />
 					</then>
 					<elseIf arg1="@name" op="=" arg2="@i">
 						<layer/> <!-- generate a new layer -->
@@ -33,14 +29,6 @@
 					<else>
 					</else>
 				</if>
-			</for>
-		</function>
-	</class>
-	
-	<object class="myClass">
-		<variable name="property1" value="something" /> <!-- initialize -->
-	</object>
-	<run function="@myObject.doSomething" file="anotherPlugin.xml">
-		<variable name="x" value="hello" /> <!-- this is to pass into a function call -->
-	</run>
+		</for>
+	</foreach>
 </plugin>

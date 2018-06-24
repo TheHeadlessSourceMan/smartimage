@@ -16,6 +16,7 @@ class XmlBackedObject(object):
 		self.parent=parent
 		self._xml=xml
 		self._id=None
+		self._variableManager=None
 		self.dirty=False
 
 	def _dereference(self,name,value,default=None,allowReplacements=True,allowLinks=True,nofollow=[]):
@@ -32,8 +33,6 @@ class XmlBackedObject(object):
 			idFind=value[1:].split('.',1)
 			idFind.append(name)
 			value=None
-			if allowReplacements and idFind[0] in self.docRoot.variables:
-				value=self.docRoot.variables[idFind[0]].value
 			if allowLinks and value==None:
 				xob=self.docRoot.getLayer(idFind[0])
 				if xob!=None:
@@ -47,6 +46,24 @@ class XmlBackedObject(object):
 					# width and height can be auto
 					if name in ['w','h'] and value in ('0','auto',None):
 						value=getattr(xob,name)
+			if value==None and self._variableManager!=None:
+				value=self._variableManager.getVariableValue(idFind[0])
+			if allowReplacements and idFind[0] in self.docRoot.variables:
+				value=self.docRoot.variables[idFind[0]].value
+			if allowLinks and value==None:
+				xob=self.docRoot.getLayerByName(idFind[0])
+				if xob!=None:
+					name=idFind[1]
+					if name=='_':
+						value=self.xml.text
+					else:
+						value=default
+						if name in xob.xml.attrib:
+							value=xob.xml.attrib[name]
+					# width and height can be auto
+					if name in ['w','h'] and value in ('0','auto',None):
+						value=getattr(xob,name)
+					
 		return value
 
 	def _getProperty(self,name,default=None,allowReplacements=True,allowLinks=True):
@@ -64,6 +81,15 @@ class XmlBackedObject(object):
 		value=self._dereference(name,value,default,allowReplacements,allowLinks,['@'+self.id+'.'+name])
 		return value
 
+	def _getPropertyArray(self,name,default=None,allowReplacements=True,allowLinks=True):
+		val=self._getProperty(name,default,allowReplacements,allowLinks)
+		if val==None:
+			return val
+		val=val.strip()
+		if val[0]=='[':
+			val=val[1:-1]
+		return [float(v) for v in val.split(',')]
+		
 	def _getPropertyPercent(self,name,default=1.0,allowReplacements=True,allowLinks=True):
 		"""
 		gets a property, always returning a decimal percent (where 1.0 = 100%)

@@ -6,70 +6,130 @@ This is a modifier layer such as blur, sharpen, posterize, etc
 from layer import *
 from blendModes import *
 from PIL import ImageFilter, ImageOps, ImageEnhance
+import numpy as np
 
 
 def imageBorder(img,thickness,edge="#ffffff00"):
 	"""
-	mirror,repeat,clamp,[color]
+	edge can be:
+		mirror - reflect the pixels leading up to the border
+		repeat - repeat the image over again (useful with repeating textures)
+		clamp - streak last pixels out to edge
+		[background color]
 	"""
 	if edge=='mirror':
-		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[0]+thickness*2))
+		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2))
 		# top
-		fill=img.crop((0,0,img.width,thickness))
+		fill=ImageOps.flip(img.crop((0,0,img.width,thickness)))
 		newImage.paste(fill,(thickness,0))
 		# bottom
-		fill=img.crop((0,image.height-thickness,img.width,image.height))
-		newImage.paste(fill,(thickness,newImage.height-img.height))
+		fill=ImageOps.flip(img.crop((0,img.height-thickness,img.width,img.height)))
+		newImage.paste(fill,(thickness,img.height+thickness))
 		# left
-		fill=img.crop((0,0,thickness,img.height))
+		fill=ImageOps.mirror(img.crop((0,0,thickness,img.height)))
 		newImage.paste(fill,(0,thickness))
 		# right
-		fill=img.crop((image.width-thickness,0,img.width,image.height))
-		newImage.paste(fill,(newImage.width-img.width,thickness))
-		# TODO: corners
+		fill=ImageOps.mirror(img.crop((img.width-thickness,0,img.width,img.height)))
+		newImage.paste(fill,(img.width+thickness,thickness))
+		# top-left corner
+		fill=ImageOps.mirror(ImageOps.flip(img.crop((0,0,thickness,thickness))))
+		newImage.paste(fill,(0,0))
+		# top-right corner
+		fill=ImageOps.mirror(ImageOps.flip(img.crop((img.width-thickness,0,img.width,thickness))))
+		newImage.paste(fill,(img.width+thickness,0))
+		# bottom-left corner
+		fill=ImageOps.mirror(ImageOps.flip(img.crop((0,img.height-thickness,thickness,img.height))))
+		newImage.paste(fill,(0,img.height+thickness))
+		# bottom-right corner
+		fill=ImageOps.mirror(ImageOps.flip(img.crop((img.width-thickness,img.height-thickness,img.width,img.height))))
+		newImage.paste(fill,(img.width+thickness,img.height+thickness))
 	elif edge=='repeat':
-		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[0]+thickness*2))
+		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2))
 		# top
 		fill=img.crop((0,0,img.width,thickness))
-		newImage.paste(fill,(thickness,0))
+		newImage.paste(fill,(thickness,img.height+thickness))
 		# bottom
-		fill=img.crop((0,image.height-thickness,img.width,image.height))
-		newImage.paste(fill,(thickness,newImage.height-img.height))
+		fill=img.crop((0,img.height-thickness,img.width,img.height))
+		newImage.paste(fill,(thickness,0))
 		# left
 		fill=img.crop((0,0,thickness,img.height))
-		newImage.paste(fill,(0,thickness))
+		newImage.paste(fill,(img.width+thickness,thickness))
 		# right
-		fill=img.crop((image.width-thickness,0,img.width,image.height))
-		newImage.paste(fill,(newImage.width-img.width,thickness))
-		# TODO: corners
+		fill=img.crop((img.width-thickness,0,img.width,img.height))
+		newImage.paste(fill,(0,thickness))
+		# top-left corner
+		fill=img.crop((0,0,thickness,thickness))
+		newImage.paste(fill,(img.width+thickness,img.height+thickness))
+		# top-right corner
+		fill=img.crop((img.width-thickness,0,img.width,thickness))
+		newImage.paste(fill,(0,img.height+thickness))
+		# bottom-left corner
+		fill=img.crop((0,img.height-thickness,thickness,img.height))
+		newImage.paste(fill,(img.width+thickness,0))
+		# bottom-right corner
+		fill=img.crop((img.width-thickness,img.height-thickness,img.width,img.height))
+		newImage.paste(fill,(0,0))
 	elif edge=='clamp':
-		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[0]+thickness*2))
+		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2))
 		# top
-		fill=img.crop((0,0,img.width,1))
-		fill.thumbnail((img.width,thickness))
+		fill=img.crop((0,0,img.width,1)).resize((img.width,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(thickness,0))
 		# bottom
-		fill=img.crop((0,image.height-1,img.width,image.height))
-		fill.thumbnail((img.width,thickness))
-		newImage.paste(fill,(thickness,newImage.height-img.height))
+		fill=img.crop((0,img.height-1,img.width,img.height)).resize((img.width,thickness),resample=Image.NEAREST)
+		newImage.paste(fill,(thickness,img.height+thickness))
 		# left
-		fill=img.crop((0,0,1,img.height))
-		fill.thumbnail((thickness,img.width))
+		fill=img.crop((0,0,1,img.height)).resize((thickness,img.height),resample=Image.NEAREST)
 		newImage.paste(fill,(0,thickness))
 		# right
-		fill=img.crop((image.width-1,0,img.width,image.height))
-		fill.thumbnail((thickness,img.height))
-		newImage.paste(fill,(newImage.width-img.width,thickness))
+		fill=img.crop((img.width-1,0,img.width,img.height)).resize((thickness,img.height),resample=Image.NEAREST)
+		newImage.paste(fill,(img.width+thickness,thickness))
 		# TODO: corners
+		# top-left corner
+		fill=img.crop((0,0,1,1)).resize((thickness,thickness),resample=Image.NEAREST)
+		newImage.paste(fill,(0,0))
+		# top-right corner
+		fill=img.crop((img.width-1,0,img.width,1)).resize((thickness,thickness),resample=Image.NEAREST)
+		newImage.paste(fill,(img.width+thickness,0))
+		# bottom-left corner
+		fill=img.crop((0,img.height-1,1,img.height)).resize((thickness,thickness),resample=Image.NEAREST)
+		newImage.paste(fill,(0,img.height+thickness))
+		# bottom-right corner
+		fill=img.crop((img.width-1,img.height-1,img.width,img.height)).resize((thickness,thickness),resample=Image.NEAREST)
+		newImage.paste(fill,(img.width+thickness,img.height+thickness))
 	else:
-		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[0]+thickness*2),edge)
+		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2),edge)
 	# splat the original image in the middle
-	if newImage.alpha in ['RGBA','LA']:
-		newImage.alpha_composite(img,dest=(thickness,thickness))
-	else:
-		newImage.paste(img,(thickness,thickness))
+	if True:
+		if newImage.mode.endswith('A'):
+			newImage.alpha_composite(img,dest=(thickness,thickness))
+		else:
+			newImage.paste(img,(thickness,thickness))
+	return newImage
 
 
+CONVOLVE_MATTRICES={
+	'emboss':[[-2,-1, 0],
+	          [-1, 1, 1],
+	          [ 0, 1, 2]],
+	'edgeDetect':[[ 0, 1, 0],
+	              [ 1,-4, 1],
+	              [ 0, 1, 0]],
+	'edgeEnhance':[[ 0, 0, 0],
+	               [-1, 1, 0],
+	               [ 0, 0, 0]],
+	'blur':[[ 0, 0, 0, 0, 0],
+	        [ 0, 1, 1, 1, 0],
+	        [ 0, 1, 1, 1, 0],
+	        [ 0, 1, 1, 1, 0],
+	        [ 0, 0, 0, 0, 0]],
+	'sharpen':[[ 0, 0, 0, 0, 0],
+	           [ 0, 0,-1, 0, 0],
+	           [ 0,-1, 5,-1, 0],
+	           [ 0, 0,-1, 0, 0],
+	           [ 0, 0, 0, 0, 0]],
+}
+	
+	
 def convolve(img,matrix,add,divide,edge):
 	size=len(matrix)
 	border=size/2-1
@@ -85,6 +145,142 @@ def distort(img,points,r=1):
 	data=((f[0],f[1]) for f,t in points)
 	img.transform(size,Image.MESH,data)
 
+
+def rgb2hsvImage(img):
+	import compositor
+	rgb=np.asarray(img)
+	final=compositor.rgb_to_hsv(rgb)
+	return Image.fromarray(final.astype('uint8'),'RGB')
+	
+def rgb2cmykImage(img):
+	import compositor
+	rgb=np.asarray(img)
+	final=compositor.rgb_to_cmyk(rgb)
+	return Image.fromarray(final.astype('uint8'),'RGBA')
+	
+def getChannel(img,channel):
+	"""
+	get a channel as a new image.
+	Returns a grayscale image, or None
+	
+	supports R,G,B,A,H,S,V
+	"""
+	if channel=='R':
+		if img.mode.startswith('RGB'):
+			ch=img.split()[0]
+		else:
+			ch=None
+	elif channel=='G':
+		if img.mode.startswith('RGB'):
+			ch=img.split()[1]
+		else:
+			ch=None
+	elif channel=='B':
+		if img.mode.startswith('RGB'):
+			ch=img.split()[2]
+		else:
+			ch=None
+	elif channel=='A':
+		if img.mode.endswith('A'):
+			ch=img.split()[-1]
+		else:
+			ch=None
+	elif channel=='H':
+		img=rgb2hsvImage(img)
+		ch=img.split()[0]
+	elif channel=='S':
+		img=rgb2hsvImage(img)
+		ch=img.split()[1]
+	elif channel=='V':
+		img=rgb2hsvImage(img)
+		ch=img.split()[2]
+	elif channel=='C':
+		img=rgb2cmykImage(img)
+		ch=img.split()[0]
+	elif channel=='M':
+		img=rgb2cmykImage(img)
+		ch=img.split()[1]
+	elif channel=='Y':
+		img=rgb2cmykImage(img)
+		ch=img.split()[2]
+	elif channel=='K':
+		img=rgb2cmykImage(img)
+		ch=img.split()[3]
+	else:
+		raise Exception('Unknown channel: '+channel)
+	return ch
+	
+	
+def getHistogram(img,channel='V',invert=False):
+	"""
+	Gets a histogram for the given image
+	
+	channel can be V,R,G,B,A, or RGB
+		if single channel, returns a simple black and white image
+		if RGB, returns all three layered together in a color image
+	"""
+	import PIL.ImageDraw
+	if len(channel)==1:
+		size=(255,255)
+		if invert:
+			bg=0
+			fg=255
+		else:
+			fg=0
+			bg=255
+		ch=getChannel(img,channel)
+		out=Image.new("L",size,bg)
+		draw=PIL.ImageDraw.Draw(out) 
+		hist=ch.histogram()
+		histMax=max(hist)
+		yScale=float(size[1])/histMax
+		for i in range(len(hist)):
+			val=hist[i]
+			if val>0:
+				draw.line((i,size[1],i,size[1]-(val*yScale)),fill=fg)        
+	elif channel=='RGB':
+		out=PIL.Image.merge('RGB',(
+			getHistogram(img,'R',invert==False),
+			getHistogram(img,'G',invert==False),
+			getHistogram(img,'B',invert==False)
+			))   
+	else:
+		raise Exception('not a valid channel')
+	return out
+	
+
+def applyHistogram(hist,img,channels='RGB'):
+	pass
+	
+def rolling_window(a, shape):  # rolling window for 2D array
+    s = (a.shape[0] - shape[0] + 1,) + (a.shape[1] - shape[1] + 1,) + shape
+    strides = a.strides + a.strides
+    return np.lib.stride_tricks.as_strided(a, shape=s, strides=strides)
+	
+	
+def applyFunctionToPatch(fn,a,patchSize=(3,3)):
+	# get all patchSize mattrices possible by sliding a patchSize window across the array
+	w=rolling_window(a,patchSize)
+	v=np.vectorize(fn,signature='(m,n)->(k,l)')
+	if False:
+		marginX=(patchSize[0]-1)/2
+		marginY=(patchSize[1]-1)/2
+		a2=np.array([])
+		for x in range(marginX,a.shape[0]-marginX):
+			for y in range(marginY,a.shape[1]-marginY):
+				v(a[x-marginX:x+marginX+1,y-marginY:y+marginY+1])
+	w.flags.writeable=True
+	r=v(w)
+	return r
+	
+def erode(img):
+	a=np.asarray(img)
+	def _erode(p):
+		print p
+		p[1,1]=1
+		return p
+	applyFunctionToPatch(_erode,a,(3,3))
+	return Image.fromarray(a.astype('uint8'),img.mode)
 
 
 class Modifier(Layer):
@@ -318,17 +514,40 @@ if __name__ == '__main__':
 	if len(sys.argv)<2:
 		printhelp=True
 	else:
+		img=None
 		for arg in sys.argv[1:]:
 			if arg.startswith('-'):
 				arg=[a.strip() for a in arg.split('=',1)]
 				if arg[0] in ['-h','--help']:
 					printhelp=True
+				elif arg[0]=='--erode':
+					i2=erode(img)
+					i2.show()
+				elif arg[0]=='--histogram':
+					mode='RGB'
+					if len(arg)>1:
+						mode=arg[1]
+					hist=getHistogram(img,mode)
+					hist.show()
+				elif arg[0]=='--channel':
+					ch=getChannel(img,arg[1])
+					if ch==None:
+						print 'No channel:',arg[1]
+					else:
+						ch.show()
+				elif arg[0]=='--border':
+					thickness,border=arg[1].split(',',1)
+					im=imageBorder(img,int(thickness),border)
+					im.show()
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
-				print 'ERR: unknown argument "'+arg+'"'
+				img=Image.open(arg)
 	if printhelp:
 		print 'Usage:'
-		print '  modifier.py [options]'
+		print '  modifier.py image.jpg [options]'
 		print 'Options:'
-		print '   NONE'
+		print '   --erode .................. erode the image'
+		print '   --histogram[=RGB] ........ possible values are V,R,G,B,A,or RGB'
+		print '   --channel=R .............. extract a channel from the image - R,G,B,A,H,S,V'
+		print '   --border=thickness,edge .. expand the image with a border - edge can be mirror,repeat,clamp,[color]'

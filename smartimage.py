@@ -16,6 +16,8 @@ from PIL import ImageDraw
 class SmartImage(Layer):
 	"""
 	This program allows an image to behave smartly and automatically
+	
+	The object acts as an array of pages/frames (array of 1 if it's just a simple image)
 	"""
 
 	def __init__(self,filename):
@@ -36,6 +38,60 @@ class SmartImage(Layer):
 				variable=Variable(self,variable)
 				self._variables[variable.name]=variable
 		return self._variables
+		
+	@property
+	def numPages(self):
+		return len(self.xml.xpath('//*/page'))
+		
+	@property
+	def numFrames(self):
+		return (self.xml.xpath('//*/frame'))
+		
+	@property
+	def page(self,pageNumber):
+		pages=self.xml.xpath('//*/page')
+		if len(pages)<=0 and pageNumber==0:
+			return self
+		return pages[pageNumber]
+		
+	@property
+	def frame(self,frameNumber):
+		frames=self.xml.xpath('//*/frame')
+		return frames[rameNumber]
+		
+	def __len__(self):
+		p=self.numPages
+		f=self.numFrames
+		if p>1:
+			if f>1:
+				raise Exception("File cannot contain both pages and frames!")
+			return p
+		if f>1:
+			return f
+		return 1
+		
+	def __getitem__(self,idxOrSlice):
+		ret=None
+		p=self.numPages
+		f=self.numFrames
+		if type(idxOrSlice)==tuple: # it's a slice
+			start,end=idxOrSlice
+			if start<0:
+				start+=self.__len__()
+			if end<0:
+				end+=self.__len__()
+			ret=[]
+			if f>p:
+				for idx in range(start,end):
+					ret.append(self.frame[idx])
+			else:
+				for idx in range(start,end):
+					ret.append(self.page[idx])
+		else:
+			if f>p:
+				ret=self.frame[idxOrSlice]
+			else:
+				ret=self.page[idxOrSlice]
 
 	def getComponent(self,name):
 		"""
@@ -193,6 +249,10 @@ class SmartImage(Layer):
 
 	def renderImage(self,renderContext=None):
 		"""
+		NOTE: you probably don't want to call directly, but rather do a 
+			smartimage[0].renderImage() just to make sure you work with 
+			multi-page and multi-frame documents.
+		
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
 		self.varUi(force=False)
@@ -275,16 +335,24 @@ if __name__ == '__main__':
 					else:
 						img.show()
 				elif arg[0]=='--image':
-					img=simg.renderImage()
-					print [0,0,img.width,img.height]
 					if len(arg)>1:
-						img.save(arg[1])
+						pages=len(simg)
+						if pages>1:
+							filename=arg[1].split('.',1)
+							digits=len(str(pages))
+							format=filename[0]+r'_{:0'+digits+'d}.'+filename[1]
+							for idx in range(pages):
+								img=simg[idx].renderImage()
+								img.save(format.format(idx))
+						else:
+							img=simg[0].renderImage()
+							img.save(arg[1])
 					else:
+						img=simg[0].renderImage()
 						img.show()
-
 						import time
-						while True:
-							time.sleep(1)
+						#while True:
+						time.sleep(1)
 				elif arg[0]=='--roi':
 					img=simg.roi
 					if len(arg)>1:
@@ -326,6 +394,7 @@ if __name__ == '__main__':
 		print 'Options:'
 		print '   --smartsize=w,h[=filename] .... smartsize the image. if no filename, show in a window'
 		print '   --image[=filename] ............ get the base image. if no filename, show in a window'
+		print '                                   if multi-image or multi-frame, modify filename to be a numbered sequence'
 		print '   --roi[=filename] .............. get the region of interest image. if no filename, show in a window'
 		print '   --save=filename ............... save out the .simg as another file name'
 		print '   --testfont=fontname ........... try to fetch the given font'

@@ -21,6 +21,16 @@ class RenderingContext(object):
 		self.cur=Bounds(0,0,0,0)
 		self.cur_image=None
 		self.visitedLayers=[]
+		self.variableContexts=[] # an array of dicts
+		
+	def getVariableValue(self,name):
+		for contextId in range(len(self.variableContexts),0):
+			if name in variableContexts[contextId]:
+				return variableContexts[contextId][name]
+		return None
+		
+	def setVariableValue(self,name,value):
+		self.variableContexts[-1][name]=value
 
 	def log(self,*vals):
 		print (' '*len(self.visitedLayers))+(' '.join([str(v) for v in vals]))
@@ -50,6 +60,8 @@ class RenderingContext(object):
 		if layer in self.visitedLayers:
 			raise Exception('ERR: Link loop with layer '+str(layer.id)+' "'+layer.name+'"')
 		self.visitedLayers.append(layer)
+		# push a new variable context
+		self.variableContexts.append({})
 		# do we need to do anything?
 		opacity=layer.opacity
 		if opacity<=0.0 or layer.visible==False:
@@ -64,6 +76,8 @@ class RenderingContext(object):
 				opacity=childLayer.opacity,blendMode=childLayer.blendMode,mask=childLayer.mask,
 				position=childLayer.location,resize=True)
 			self.log('adding',childLayer.name,'at',childLayer.location)
+		if layer.crop!=None:
+			image=image.crop(layer.crop)
 		if layer.rotate%360!=0:
 			self.log('rotating',layer.name)
 			bounds=Bounds(0,0,image.width,image.height)
@@ -72,7 +86,9 @@ class RenderingContext(object):
 			image=image.rotate(layer.rotate)
 		self.log('info',layer.name,'mode='+image.mode,'bounds='+str((0,0,image.width,image.height)))
 		self.log('finished',layer.name)
+		# pop off tracking info for this layer
 		del self.visitedLayers[-1]
+		del self.variableContexts[-1]
 		return image
 
 
@@ -165,10 +181,23 @@ class Layer(XmlBackedObject,Bounds):
 	@property
 	def visible(self):
 		return self._getProperty('visible','y')[0] in ['y','Y','t','T','1']
+		
+	@property
+	def detatched(self):
+		return self._getProperty('detatched','n')[0] in ['y','Y','t','T','1']
+		
+	@property
+	def crop(self):
+		return self._getPropertyArray('crop',None)
 
 	@property
 	def rotate(self):
 		return float(self._getProperty('rotate','0'))
+		
+	@property
+	def relativeTo(self):
+		# TODO: dimensions need to account for this!
+		return self._getProperty('relativeTo','parent')
 
 	@property
 	def name(self):
