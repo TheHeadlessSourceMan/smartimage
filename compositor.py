@@ -5,6 +5,7 @@ Implementation of photoshop/gimp blend modes in python.
 """
 from PIL import Image, ImageChops, ImageEnhance
 import numpy as np
+from helper_routines import *
 
 
 def adjustOpacity(image,amount=1.0):
@@ -54,125 +55,6 @@ def applyMask(image,mask):
 	else:
 		image.putalpha(mask)
 	return image
-
-
-def hasAlpha(imgMode):
-	"""
-	can pass in a mode string or an image
-	"""
-	if type(imgMode)!=str:
-		imgMode=imgMode.mode
-	return imgMode[-1]=='A'
-
-
-def isColor(imgMode):
-	"""
-	can pass in a mode string or an image
-	"""
-	if type(imgMode)!=str:
-		imgMode=imgMode.mode
-	return imgMode[0]!='L'
-
-
-def maxMode(mode1,mode2='L',requireAlpha=False):
-	"""
-	Finds the maximum color mode.
-
-	mode1, mode2 can either one be a textual image mode, or an image
-
-	returns: textual image mode
-	"""
-	if isColor(mode1) or isColor(mode2):
-		ret='RGB'
-	else:
-		ret='L'
-	if requireAlpha or hasAlpha(mode1) or hasAlpha(mode2):
-		ret=ret+'A'
-	return ret
-
-
-def extendImageCanvas(pilImage,newBounds,extendColor=(128,128,128,0)):
-	"""
-	Make pilImage the correct canvas size/location.
-
-	:param pilImage: the image to move
-	:param newBounds - (w,h) or (x,y,w,h) or Bounds object
-	:extendColor: color to use when extending the canvas (automatically choses image mode based on this color)
-
-	NOTE: always creates a new image, so no original bits are altered
-	"""
-	if type(newBounds)==tuple:
-		if len(newBounds)>2:
-			x,y,w,h=newBounds
-		else:
-			x,y=0,0
-			w,h=newBounds
-	else:
-		x,y,w,h=newBounds.x,newBounds.y,newBounds.w,newBounds.h
-	if w<pilImage.width or h<pilImage.height:
-		raise Exception('Cannot "extend" canvas to smaller size. ('+str(pilImage.width)+','+str(pilImage.height)+') to ('+str(w)+','+str(h)+')')
-	if type(extendColor) not in [list,tuple] or len(extendColor)<2:
-		mode="L"
-	elif len(extendColor)<4:
-		mode="RGB"
-	else:
-		mode="RGBA"
-	mode=maxMode(mode,pilImage)
-	img=Image.new(mode,(int(w),int(h)),extendColor)
-	x=max(0,w/2-pilImage.width/2)
-	y=max(0,h/2-pilImage.height/2)
-	if hasAlpha(mode):
-		if not hasAlpha(pilImage):
-			pilImage=pilImage.convert(maxMode(pilImage,requireAlpha=True))
-		img.alpha_composite(pilImage,dest=(int(x),int(y)))
-	else:
-		img.paste(pilImage,box=(int(x),int(y)))
-	return img
-
-
-def paste(image,overImage,position=(0,0),resize=True):
-	"""
-	A simple, dumb, paste operation like PIL's paste, only automatically uses alpha
-
-	image - the image to be pasted on top (if None, returns overImage)
-	overImage - the image will be pasted over the top of this image (if None, returns image)
-	position - the position to place the new image, relative to overImage (can be negative)
-	resize - allow the resulting image to be resized if overImage extends beyond its bounds
-
-	returns: a combined image, or None if both image and overImage are None
-
-	NOTE: this is effectively the same as doing blend(image,'normal',overImage,position,resize)
-
-	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
-	"""
-	if image==None:
-		return overImage
-	if overImage==None:
-		if position==(0,0): # no change
-			return image
-		else:
-			# create a blank background
-			overImage=Image.new(maxMode(image,requireAlpha=True),(int(image.width+position[0]),int(image.height+position[1])))
-	elif (image.width+position[0]>overImage.width) or (image.height+position[1]>overImage.height):
-		# resize the overImage if necessary
-		newImg=Image.new(
-			size=(int(max(image.width+position[0],overImage.width)),int(max(image.height+position[1],overImage.height))),
-			mode=maxMode(image,overImage,requireAlpha=True))
-		paste(overImage,newImg)
-		overImage=newImg
-	elif hasattr(overImage,'immutable') and overImage.immutable==True:
-		# if it is flagged immutable, create a copy that we are allowed to change
-		overImage=overImage.copy()
-	# do the deed
-	if hasAlpha(image):
-		# TODO: which of these two lines is best?
-		#overImage.paste(image,position,image) # NOTE: (image,(x,y),alphaMask)
-		if overImage.mode!=image.mode:
-			overImage=overImage.convert(image.mode)
-		overImage.alpha_composite(image,dest=(int(position[0]),int(position[1])))
-	else:
-		overImage.paste(image,(int(position[0]),int(position[1])))
-	return overImage
 
 
 def _blendArray(front,back,fn):
@@ -225,63 +107,6 @@ def _blendArray(front,back,fn):
 	return final
 
 
-def rgb_to_hsv(rgb):
-	"""
-	This comes from scikit-image:
-		https://github.com/scikit-image/scikit-image/blob/master/skimage/color/colorconv.py
-	"""
-	out = np.empty_like(rgb)
-	# -- V channel
-	out_v = rgb.max(-1)
-	# -- S channel
-	delta = rgb.ptp(-1)
-	# Ignore warning for zero divided by zero
-	old_settings = np.seterr(invalid='ignore')
-	out_s = delta / out_v
-	out_s[delta == 0.] = 0.
-	# -- H channel
-	# red is max
-	idx = (rgb[:, :, 0] == out_v)
-	out[idx, 0] = (rgb[idx, 1] - rgb[idx, 2]) / delta[idx]
-	# green is max
-	idx = (rgb[:, :, 1] == out_v)
-	out[idx, 0] = 2. + (rgb[idx, 2] - rgb[idx, 0]) / delta[idx]
-	# blue is max
-	idx = (rgb[:, :, 2] == out_v)
-	out[idx, 0] = 4. + (rgb[idx, 0] - rgb[idx, 1]) / delta[idx]
-	out_h = (out[:, :, 0] / 6.) % 1.
-	out_h[delta == 0.] = 0.
-	np.seterr(**old_settings)
-	# -- output
-	out[:, :, 0] = out_h
-	out[:, :, 1] = out_s
-	out[:, :, 2] = out_v
-	# remove NaN
-	out[np.isnan(out)] = 0
-	return out
-
-
-def hsv_to_rgb(hsv):
-	"""
-	This comes from scikit-image:
-		https://github.com/scikit-image/scikit-image/blob/master/skimage/color/colorconv.py
-	"""
-	hi = np.floor(hsv[:, :, 0] * 6)
-	f = hsv[:, :, 0] * 6 - hi
-	p = hsv[:, :, 2] * (1 - hsv[:, :, 1])
-	q = hsv[:, :, 2] * (1 - f * hsv[:, :, 1])
-	t = hsv[:, :, 2] * (1 - (1 - f) * hsv[:, :, 1])
-	v = hsv[:, :, 2]
-	hi = np.dstack([hi, hi, hi]).astype(np.uint8) % 6
-	out = np.choose(hi, [np.dstack((v, t, p)),
-		 np.dstack((q, v, p)),
-		 np.dstack((p, v, t)),
-		 np.dstack((p, q, v)),
-		 np.dstack((t, p, v)),
-		 np.dstack((v, p, q))])
-	return out
-
-
 def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=True):
 	"""
 	mathstr -
@@ -327,20 +152,20 @@ def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=Tru
 	topRGBA=np.asarray(topImage)/shift
 	for tag in 'HSV':
 		if equation.find('top'+tag)>=0:
-			topHSV=rgb_to_hsv(topRGBA)
+			topHSV=rgb2hsvArray(topRGBA)
 			break
 	for tag in 'CMYK':
 		if equation.find('top'+tag)>=0:
-			topCMYK=rgb_to_cmyk(topRGBA)
+			topCMYK=rgb2cmykArray(topRGBA)
 			break
 	botRGBA=np.asarray(botImage)/shift
 	for tag in 'HSV':
 		if equation.find('bot'+tag)>=0:
-			botHSV=rgb_to_hsv(botRGBA)
+			botHSV=rgb2hsvArray(botRGBA)
 			break
 	for tag in 'CMYK':
 		if equation.find('bot'+tag)>=0:
-			botCMYK=rgb_to_cmyk(botRGBA)
+			botCMYK=rgb2cmykArray(botRGBA)
 			break
 	# convert the equation into python code
 	import re
@@ -375,7 +200,7 @@ def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=Tru
 			final=np.dstack((final,channelSet))
 	# convert to RGB colorspace if necessary
 	if resultForm=='HSV':
-		final=hsv_to_rgb(final)
+		final=hsv2rgbArray(final)
 	elif resultForm=='CMYK':
 		final=cmyk_to_rgb(final)
 	final=final*shift
@@ -490,22 +315,22 @@ def blend(image,blendMode,overImage,position=(0,0),resize=True):
 		#return Cb/Cs
 		return Cs/Cb
 	def _hue(Cb,Cs):
-		CbH=rgb_to_hsv(Cb)
-		CsH=rgb_to_hsv(Cs)
-		return hsv_to_rgb(np.dstack((CbH[:,:,0],CsH[:,:,1:])))
+		CbH=rgb2hsvArray(Cb)
+		CsH=rgb2hsvArray(Cs)
+		return hsv2rgbArray(np.dstack((CbH[:,:,0],CsH[:,:,1:])))
 	def _saturation(Cb,Cs):
-		CbH=rgb_to_hsv(Cb)
-		CsH=rgb_to_hsv(Cs)
-		return hsv_to_rgb(np.dstack((CsH[:,:,0],CbH[:,:,1],CsH[:,:,2])))
+		CbH=rgb2hsvArray(Cb)
+		CsH=rgb2hsvArray(Cs)
+		return hsv2rgbArray(np.dstack((CsH[:,:,0],CbH[:,:,1],CsH[:,:,2])))
 	def _value(Cb,Cs):
-		CbH=rgb_to_hsv(Cb)
-		CsH=rgb_to_hsv(Cs)
-		return hsv_to_rgb(np.dstack((CsH[:,:,:2],CbH[:,:,2])))
+		CbH=rgb2hsvArray(Cb)
+		CsH=rgb2hsvArray(Cs)
+		return hsv2rgbArray(np.dstack((CsH[:,:,:2],CbH[:,:,2])))
 	def _color(Cb,Cs):
 		# TODO: Very close, but seems to lose some blue values compared to gimp
-		CbH=rgb_to_hsv(Cb)
-		CsH=rgb_to_hsv(Cs)
-		return hsv_to_rgb(np.dstack((CbH[:,:,:2],CsH[:,:,2])))
+		CbH=rgb2hsvArray(Cb)
+		CsH=rgb2hsvArray(Cs)
+		return hsv2rgbArray(np.dstack((CbH[:,:,:2],CsH[:,:,2])))
 
 	#------------------------------------
 

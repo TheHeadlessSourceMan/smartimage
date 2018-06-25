@@ -5,83 +5,77 @@ This allows color correction (curves, levels, etc) of PIL images
 """
 from PIL import Image
 import numpy as np
+from helper_routines import *
+	
 
+def fft(img,shift=False):
+	import scipy.fftpack
+	a=numpyArray(img)
+	freq=scipy.fftpack.fft2(a)
+	if shift:
+		freq=scipy.fftpack.fftshift(freq)
+	return freq
 
-class Curves(object):
-	def __init__(self,points=None):
-		"""
-		:param points: percentage floats from 0..1 in the form [(cIn,cOut)] or [(cIn,cOut,cubic)]
-		"""
-		self._points=[[],[],[],[]] # in the form [[(rIn,rOut)],[(gIn,gOut)],[(bIn,bOut)],[(aIn,aOut)]]
-		self.addPoints(points)
 		
-	def addPoints(self,points,channel='RGB'):
-		"""
-		:param points: percentage floats from 0..1 in the form [(cIn,cOut)] or [(cIn,cOut,cubic)]
-		:prarm channel: can be 'R','G','B','RGB',or 'A'
-		"""
-		channel=channel.upper()
-		if points==None:
-			return
-		if type(points)!=list:
-			points=(points)
-		for point in points:
-			if channel=='RGB':
-				self._points[0].append(point)
-				self._points[1].append(point)
-				self._points[2].append(point)
-			elif channel=='R':
-				self._points[0].append(point)
-			elif channel=='G':
-				self._points[1].append(point)
-			elif channel=='B':
-				self._points[2].append(point)
-			elif channel=='A':
-				self._points[3].append(point)
-		for chan in self._points:
-			chan.sort()
-		
-	def asExpression(self,arrayName='npImg'):
-		"""
-		convert these points to a numpy expression
-		"""
-		exprs=[]
-		for i in range(len(self._points)):
-			chan=self._points[i]
-			last=(0,0)
-			expr='@'
-			for point in chan:
-				if last[0]!=point[0] and last[1]!=point[1]:
-					var=var='channels['+str(i)+']'
-					var='channels['+str(i)+':'+str(last[0])+'>'+var+'&'+var+'>'+str(point[0])+']'
-					a=str(last[1])
-					b=str(point[1]/last[1]+last[1])
-					if len(point)>2: # cubic curve
-						c=str(point[2])
-						currentCurve=a+'+'+b+'*'+var+'+'+c+'*np.pow('+var+',2)'
-					else: # linear curve
-						currentCurve=a+'+'+b+'*'+var
-					expr=var
-					#expr=expr.replace('@','np.where('+str(last[0])+'>'+var+'>'+str(point[0])+','+currentCurve+',@)')
-				last=point
-			expr=expr.replace('@','1.0')
-			exprs.append(expr)
-		ret='('+(','.join(exprs))+')'
-		return ret
-				
-	def applyTo(self,image):
-		exp=self.asExpression()
-		print 'Applying:\n\t',exp
-		if exp==None:
-			final=image.copy()
-		else:
-			npImg=np.asarray(image)/255.0
-			channels=npImg[:,:,:]
-			npImg=eval(exp)
-			npImg=np.clip(npImg*255.0,0.0,255.0)
-			npImg=dstack(npImg)
-			npImg=Image.fromarray(npImg.astype('uint8'),image.mode)
-		return npImg
+def ifft(freq):
+	import scipy.fftpack
+	a=scipy.fftpack.ifft2(freq)
+	return pilImage(a)
+	
+	
+def perPixel(fn,img,clamp=True):
+	"""
+	Call fn once per each pixel in the img.
+	
+	Since this is a looping thing, it can be rather slow.
+	Your best bet is to construct your algorithm out of numpy's ufuncs.
+	"""
+	a=numpyArray(img)
+	if type(fn)!=np.lib.function_base.vectorize:
+		fn=np.vectorize(fn,signature='(m)->(k)')
+	pixels=np.reshape(a,(-1,3))
+	pixels=fn(pixels)
+	a=np.reshape(pixels,a.shape)
+	if clamp:
+		a=clampImage(a)
+	return a
+	
+	
+def testPerPixel(img):
+	rgbM=[1.0,0.50,1.0]
+	rgbB=[0,0.5,0]
+	def _coloradj(px):
+		return px*rgbM+rgbB
+	a=perPixel(_coloradj,img)
+	return pilImage(a)
+	
+	
+def levels(img,shadows=0,midtones=0.5,higlights=1,clampBlack=0,clampWhite=1):
+	return curves(img,[[shadows,0],[midtones,0.5],[higlights,1]],clampBlack=0,clampWhite=1)
+
+	
+def curves(img,controlPoints,clampBlack=0,clampWhite=1,degree=None,extrapolate=True):
+	"""
+	:param img: evaluate the curve at these points can be pil image or numpy array
+	:param controlPoints: set of [x,y] points that define the mapping
+	:param clampBlack: clamp the black pixels to this value
+	:param clampBlack: clamp the white pixels to this value
+	:param degree: polynomial degree (if omitted, make it the same as the number of control points)
+	:param extrapolate: go beyond the defined area of the curve to get values (oterwise returns NaN for outside values)
+	:return mapped: the new points that correlate to the img points
+	"""
+	import scipy.interpolate
+	img=numpyArray(img)
+	count=len(controlPoints)
+	if degree==None:
+		degree=count-1
+	else:
+		degree=np.clip(degree,1,count-1)
+	knots=np.clip(np.arange(count+degree+1)-degree,0,count-degree)
+	spline=scipy.interpolate.BSpline(knots,controlPoints,degree)
+	resultPoints=spline(img[:,:,:],extrapolate=extrapolate)[:,:,:,0] # for some reason it keeps the original point, which we need to strip off
+	resultPoints=clampImage(resultPoints,clampBlack,clampWhite)
+	return pilImage(resultPoints)
 
 		
 if __name__ == '__main__':
@@ -99,7 +93,6 @@ if __name__ == '__main__':
 		printhelp=True
 	else:
 		import json,time
-		curves=Curves()
 		currentChannel='RGB'
 		image=None
 		for arg in sys.argv[1:]:
@@ -109,16 +102,19 @@ if __name__ == '__main__':
 					printhelp=True
 				elif arg[0]=='--channel':
 					currentChannel=arg[1]
-				elif arg[0]=='--addPoints':
-					points=json.loads(arg[1])
-					curves.addPoints(points,currentChannel)
 				elif arg[0]=='--show':
-					out=curves.applyTo(image)
-					out.show()
-					time.sleep(1.0)
+					image.show()
 				elif arg[0]=='--save':
-					out=curves.applyTo(image)
-					out.save(arg[1])
+					image.save(arg[1])
+				elif arg[0]=='--levels':
+					if len(arg)>1:
+						params=[float(v) for v in arg[1].split(',')]
+					else:
+						params=[]
+					image=levels(image,*params)
+				elif arg[0]=='--curves':
+					points=[[float(xy) for xy in pt.split(',')[-2:]] for pt in arg[1][0:-1].replace('[','').split(']')]
+					image=curves(image,points)
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
@@ -127,7 +123,8 @@ if __name__ == '__main__':
 		print 'Usage:'
 		print '  colorCorrect.py input.jpg [options]'
 		print 'Options:'
-		print "   --channel= .................. 'R','G','B','RGB',or 'A'"
-		print '   --addPoints= ................ percentage floats from 0..1 in the form [(cIn,cOut)] or [(cIn,cOut,cubic)]'
-		print '   --show ...................... display the output image'
-		print '   --save=filename ............. save the output image'
+		print "   --channel=R ................... 'R','G','B','RGB',or 'A'"
+		print '   --show ........................ display the output image'
+		print '   --save=filename ............... save the output image'
+		print '   --levels=low,mid,high,min,max . perfom a levels color adjustment (all values 0..1)'
+		print '   --curves=[x,y][x,y][...] ...... perfom a curves color adjustment using the given points (all values 0..1)'
