@@ -9,16 +9,53 @@ from PIL import Image
 
 #-------------- numpy <-> PIL smart conversion
 
-def numpyArray(img,floatingPoint=True):
+def defaultLoader(f):
+	"""
+	load an image from a file-like object, filename, or url of type
+		file://
+		ftp://
+		sftp://
+		http://
+		https://
+	"""
+	if isinstance(f,np.ndarray) or isinstance(f,Image.Image):
+		return f
+	if type(f) in [str,unicode]:
+		proto=f.split('://',1)
+		if len(proto)>2 and proto.find('/')<0:
+			if proto[0]=='file':	
+				f=proto[-1]
+				if os.sep!='/':
+					f=f.replace('/',os.sep)
+					if f[1]=='|':
+						f[1]=':'
+			else:
+				proto=proto[1]
+		else:
+			proto='file'
+		if proto!='file':
+			import urllib2,cStringIO
+			headers={'User-Agent':'Mozilla 5.10'} # some servers only like "real browsers"
+			request=urllib2.Request(f,None,headers)
+			response=urllib2.urlopen(request)
+			f=cStringIO.StringIO(response.read())
+	return Image.open(f)
+
+def numpyArray(img,floatingPoint=True,loader=None):
 	"""
 	always return a writeable ndarray
 	
 	if img is a pil image, convert it.
 	if it's already an array, return it
 	
-	:param img: can be a pil image or a numpy array
+	:param img: can be a pil image, a numpy array, or anything loader can load
 	:param floatingPoint: return a float array vs return a byte array
+	:param loader: return a tool used to load images from strings.  if None, use defaultLoader() in this file
 	"""
+	if type(img) in [str,unicode] or hasattr(img,'read'):
+		if loader==None:
+			loader=defaultLoader
+		img=loader(img)
 	if type(img)==np.ndarray:
 		a=img
 	else:
@@ -39,15 +76,7 @@ def pilImage(a):
 	
 	:param a: can be a pil image or a numpy array
 	"""
-	l=len(a[0,0])
-	if l==1:
-		mode='L'
-	elif l==2:
-		mode='LA'
-	elif l==3:
-		mode='RGB'
-	else:
-		mode='RGBA'
+	mode=imageMode(a)
 	if isFloat(a):
 		a=np.round(a*255)
 	return Image.fromarray(a.astype('uint8'),mode)
@@ -64,8 +93,10 @@ def imageMode(img):
 	if type(img)==str:
 		return img
 	elif type(img)==np.ndarray:
+		if len(img.shape)<3: # black and white is [x,y,val] not [x,y,[val]]
+			return 'L'
 		modeGuess=['L','LA','RGB','RGBA']
-		return modeGuess[len(img[0,0])]
+		return modeGuess[img.shape[2]-1]
 	return img.mode
 	
 	
@@ -78,39 +109,37 @@ def isFloat(img):
 	:return bool:
 	"""
 	if type(img)==np.ndarray:
-		if type(img[0,0,0]) in [np.float,np.float64]:
-			return True
+		if len(img.shape)<3: # black and white is [x,y,val] not [x,y,[val]]
+			if type(img[0,0]) in [np.float,np.float64]:
+				return True
+		else:
+			if type(img[0,0,0]) in [np.float,np.float64]:
+				return True
 	return False
 
 	
-def hasAlpha(imgMode):
+def hasAlpha(mode):
 	"""
 	determine if an image mode is has an alpha channel
 	
-	:param imgMode: can either one be a textual image mode, numpy array, or an image
+	:param mode: can either one be a textual image mode, numpy array, or an image
 	:return bool:
 	"""
-	if type(imgMode)!=str:
-		if type(img)==np.ndarray:
-			return len(img[0,0]) in [2,4] # 'LA' or 'RGBA'
-		else:
-			imgMode=imgMode.mode
-	return imgMode[-1]=='A'
+	if type(mode)!=str:
+		mode=imageMode(mode)
+	return mode[-1]=='A'
 
 
-def isColor(imgMode):
+def isColor(mode):
 	"""
 	determine if an image mode is color (or grayscale)
 	
-	:param imgMode: can either one be a textual image mode, numpy array, or an image
+	:param mode: can either one be a textual image mode, numpy array, or an image
 	:return bool:
 	"""
-	if type(imgMode)!=str:
-		if type(img)==np.ndarray:
-			return len(img[0,0])>2
-		else:
-			imgMode=imgMode.mode
-	return imgMode[0]!='L'
+	if type(mode)!=str:
+		mode=imageMode(mode)
+	return mode[0]!='L'
 	
 	
 def maxMode(mode1,mode2='L',requireAlpha=False):
@@ -131,6 +160,42 @@ def maxMode(mode1,mode2='L',requireAlpha=False):
 		ret=ret+'A'
 	return ret
 
+	
+def changeMode(img,mode):
+	"""
+	changes the image to a different color mode
+	"""
+	curmode=imageMode(img)
+	if curmode!=mode:
+		if type(img)==np.ndarray:
+			# TODO: this would be faster to do in array-land, but I'm too lazy to 
+			#	mess with the if/then spaghetti required for that.
+			img=pilImage(img)
+			
+			img=img.convert(mode)
+		else:
+			img=img.convert(mode)
+	return img
+	
+	
+def makeSameMode(images):
+	"""
+	takes an array of images, returns an array of images
+	converts all into the max image mode of all images in the list
+	"""
+	maxmode='L'
+	modeDifferences=False
+	for i in range(len(images)):
+		if i==0:
+			maxmode=imageMode(images[i])
+		else:
+			mode=imageMode(images[i])
+			if mode!=maxmode:
+				modeDifferences=True
+				maxmode=maxMode(maxmode,mode)
+	if modeDifferences:
+		images=[changeMode(img,maxmode) for img in images]
+	return images
 	
 #------------------- convert to other color representations
 	
@@ -224,6 +289,23 @@ def hsv2rgbArray(hsv):
 		 np.dstack((v, p, q))])
 	return out
 	
+
+def rgb2cmykArray(rgb):
+	"""
+	Takes [[[r,g,b]]] colors in range 0..1
+	Returns [[[c,m,y,k]]] in range 0..1
+	"""
+	k=rgb.sum(-1)
+	c = 1.0 - rgb[:,:,0]
+	m = 1.0 - rgb[:,:,1]
+	y = 1.0 - rgb[:,:,2]
+	minCMY=np.dstack((c,m,y)).min(-1)
+	c = (c - minCMY) / (1.0 - minCMY)
+	m = (m - minCMY) / (1.0 - minCMY)
+	y = (y - minCMY) / (1.0 - minCMY)
+	k = minCMY
+	cmyk=np.dstack((c,m,y,k))
+	return cmyk
 	
 def rgb2cmykImage(img):
 	"""
@@ -236,7 +318,6 @@ def rgb2cmykImage(img):
 	rgb=numpyArray(img)
 	final=rgb2cmykArray(rgb)
 	return pilImage(final)
-	
 	
 def getChannel(img,channel):
 	"""
@@ -552,6 +633,20 @@ def getHistogram(img,channel='V',invert=False):
 	return out
 	
 	
+#------------------ compare images (useful for automated testing)
+
+def compareImage(img1,img2,tolerance=0.99999):
+	"""
+	images can be a pil image, rgb numpy array, url, or filename
+	tolerance - a decimal percent, default is five-nines
+	"""
+	img1,img2=makeSameMode([defaultLoader(img1),defaultLoader(img2)])
+	img1,img2=numpyArray(img1),numpyArray(img2)
+	if img1.shape!=img2.shape:
+		# if they're not even the same size, never mind, then
+		return False
+	return np.allclose(img1,img2,rtol=tolerance)
+	
 #------------------ main entry point for external fun
 
 
@@ -590,10 +685,12 @@ if __name__ == '__main__':
 					thickness,border=arg[1].split(',',1)
 					im=imageBorder(img,int(thickness),border)
 					im.show()
+				elif arg[0]=='--compare':
+					print compareImage(img,arg[1])
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
-				img=Image.open(arg)
+				img=defaultLoader(arg)
 	if printhelp:
 		print 'Usage:'
 		print '  helper_routines.py image.jpg [options]'
@@ -601,3 +698,6 @@ if __name__ == '__main__':
 		print '   --histogram[=RGB] ........ possible values are V,R,G,B,A,or RGB'
 		print '   --channel=R .............. extract a channel from the image - R,G,B,A,H,S,V'
 		print '   --border=thickness,edge .. expand the image with a border - edge can be mirror,repeat,clamp,[color]'
+		print '   --compare=img2.jpg ....... compares to another image (useful for testing)'
+		print 'Notes:'
+		print '   * All filenames can also take file:// http:// https:// ftp:// urls'
