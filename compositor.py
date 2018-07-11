@@ -27,36 +27,6 @@ def adjustOpacity(image,amount=1.0):
 	return image
 
 
-def applyMask(image,mask):
-	"""
-	image: the image to be changed
-	mask: a mask image to use to cut out the image it can be:
-		image with alpha channel to steal
-		-or-
-		grayscale (white=opaque, black=transparent)
-
-	returns: adjusted image
-
-	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
-	"""
-	if image==None or mask==None:
-		return image
-	if hasattr(image,'immutable') and image.immutable==True:
-		image=image.copy()
-	if hasAlpha(image):
-		if mask.width>image.width or mask.height>image.height:
-			image=extendImageCanvas(image,(mask.width,mask.height),extendColor=(0,0,0,0))
-		elif mask.width<image.width or mask.height<image.height:
-			mask=extendImageCanvas(mask,(image.width,image.height),extendColor=0)
-		channels=np.asarray(image)
-		alpha=np.minimum(channels[:,:,-1],mask) # Darken blend mode
-		channels=np.dstack((channels[:,:,0:-1],alpha))
-		image=Image.fromarray(channels.astype('uint8'),image.mode)
-	else:
-		image.putalpha(mask)
-	return image
-
-
 def _blendArray(front,back,fn):
 	"""
 	:param fn: represents the B function from from the adobe blend modes documentation.
@@ -447,7 +417,7 @@ def composite(image,overImage,opacity=1.0,blendMode='normal',mask=None,position=
 			# create a blank background
 			overImage=Image.new(maxMode(image,requireAlpha=True),(int(image.width+position[0]),int(image.height+position[1])))
 	if mask!=None: # apply mask BEFORE opacity
-		image=applyMask(image,mask)
+		image=setAlpha(image,mask)
 	if opacity!=1.0: # apply opacity before blending
 		image=adjustOpacity(image,opacity)
 	return blend(image,blendMode,overImage,position,resize)

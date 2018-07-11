@@ -1,0 +1,10 @@
+<smartimage>
+	<!-- make the image look like a communist propaganda poster -->
+	<plugin name="communist" vars="amount">
+		<pixelMath>
+			r=((r+g+b)/3)&lt;amount?0:r*2
+			g=((r+g+b)/3)&lt;amount?0:g/2
+			b=((r+g+b)/3)&lt;amount?0:b/2
+		</pixelMath>
+	</plugin>
+</pixelOperator>

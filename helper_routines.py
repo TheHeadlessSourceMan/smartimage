@@ -70,16 +70,27 @@ def numpyArray(img,floatingPoint=True,loader=None):
 	return a
 	
 	
-def pilImage(a):
+def pilImage(img,loader=None):
 	"""
-	converts a numpy array to a pil image
+	converts anything to a pil image
 	
 	:param a: can be a pil image or a numpy array
 	"""
-	mode=imageMode(a)
-	if isFloat(a):
-		a=np.round(a*255)
-	return Image.fromarray(a.astype('uint8'),mode)
+	if isinstance(img,Image.Image):
+		# already what we need
+		pass
+	elif type(img) in [str,unicode] or hasattr(img,'read'):
+		# load it with the loader
+		if loader==None:
+			loader=defaultLoader
+		img=loader(img)
+	else:
+		# convert numpy array
+		mode=imageMode(img)
+		if isFloat(img):
+			img=np.round(img*255)
+		img=Image.fromarray(img.astype('uint8'),mode)
+	return img
 	
 
 #-------------- color mode/info
@@ -102,19 +113,26 @@ def imageMode(img):
 	
 def isFloat(img):
 	"""
-	Decide whether image pixels are floating point or byte
+	Decide whether image pixels or an individual color is floating point or byte
 	
 	:param img: can either one be a numpy array, or an image
 	
 	:return bool:
 	"""
 	if type(img)==np.ndarray:
-		if len(img.shape)<3: # black and white is [x,y,val] not [x,y,[val]]
+		if len(img.shape)<2: # a single color
+			if type(img[0]) in [np.float,np.float64]:
+				return True
+		elif len(img.shape)<3: # black and white is [x,y,val] not [x,y,[val]]
 			if type(img[0,0]) in [np.float,np.float64]:
 				return True
 		else:
 			if type(img[0,0,0]) in [np.float,np.float64]:
 				return True
+	if type(img) in [tuple,list]:
+		# a single color
+		if type(img[0])==float:
+			return True
 	return False
 
 	
@@ -128,6 +146,71 @@ def hasAlpha(mode):
 	if type(mode)!=str:
 		mode=imageMode(mode)
 	return mode[-1]=='A'
+	
+	
+def getAlpha(image,alwaysCreate=True):
+	"""
+	gets the alpha channel regardless of image type
+	
+	:param image: the image whose mask to get
+	:param alwaysCreate: always returns a numpy array (otherwise, may return None)
+	
+	:return: alpha channel as a PIL image, or numpy array, or possibly None, depending on alwaysCreate
+	"""
+	ret=None
+	if type(image)==type(None) or not hasAlpha(image):
+		if alwaysCreate:
+			ret=np.array(getSize(image))
+			ret.fill(1.0)
+	elif isinstance(image,Image.Image):
+		ret=image.getalpha()
+	else:
+		ret=image[:,:,-1]
+	return ret
+	
+	
+def setAlpha(image,alpha):
+	"""
+	sets the alpha mask regardless of image type
+
+	:param image: the image to be changed
+	:param mask: a mask image to use to cut out the image it can be:
+		image with alpha channel to steal
+		-or-
+		grayscale (white=opaque, black=transparent)
+
+	:returns: adjusted image (could be PIL image or numpy array, depending on 
+		what's expedient.  If you need a particular one, wrap the call in pilImage() or numpyArray())
+	
+	NOTE: if alpha channel exists, will be darkened such that
+		a hole in either mask results in a hole
+		
+	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
+	"""
+	if type(image)==type(None) or type(alpha)==type(None): # comparing directly to None does unhappy things with numpy arrays
+		return image
+	if isinstance(image,Image.Image): # make sure not to smash any bits we're keeping
+		if hasattr(image,'immutable') and image.immutable==True:
+			image=image.copy()
+	if imageMode(alpha)!='L':
+		alpha=getAlpha(alpha,alwaysCreate=False) # make sure we have a grayscale to combine
+		if type(alpha)==type(None):
+			return image
+	image,alpha=makeSamegetSize(image,alpha,(0,0,0,0))
+	if hasAlpha(image):
+		channels=np.asarray(image)
+		alpha1=np.minimum(channels[:,:,-1],alpha) # Darken blend mode
+		image=np.dstack((channels[:,:,0:-1],alpha1))
+	else:
+		if isinstance(image,Image.Image):
+			if not isinstance(alpha,Image.Image):
+				alpha=pilImage(alpha)
+			image.putalpha(alpha)
+		else:
+			if isinstance(alpha,Image.Image):
+				alpha=np.asarray(alpha)
+			image=np.dstack((channels[:,:,0:-1],alpha1))
+	return image
 
 
 def isColor(mode):
@@ -171,7 +254,6 @@ def changeMode(img,mode):
 			# TODO: this would be faster to do in array-land, but I'm too lazy to 
 			#	mess with the if/then spaghetti required for that.
 			img=pilImage(img)
-			
 			img=img.convert(mode)
 		else:
 			img=img.convert(mode)
@@ -198,6 +280,47 @@ def makeSameMode(images):
 	return images
 	
 #------------------- convert to other color representations
+	
+def changeColorspace(img,toSpace='RGB',fromSpace=None):
+	"""
+	change from any colorspace to any colorspace
+	
+	:param img: the image to convert
+	:param toSpace: space to convert to
+	:param fromSpace: space to convert from - guess from img if None
+	"""
+	img=numpyArray(img)
+	if fromSpace==None:
+		fromSpace=imageMode(img)
+	raiseErr=False
+	if fromSpace!=toSpace:
+		if fromSpace=='RGB':
+			if toSpace=='HSV':
+				img=rgb2hsvArray(img)
+			elif toSpace=='CMYK':
+				img=rgb2cmykArray(img)
+			else:
+				raiseErr=True
+		elif fromSpace=='CMYK':
+			if toSpace=='HSV':
+				img=rgb2hsvArray(cmyk2rgbArray(img))
+			elif toSpace=='RGB':
+				img=cmyk2rgbArray(img)
+			else:
+				raiseErr=True
+		elif fromSpace=='HSV':
+			if toSpace=='RGB':
+				img=hsv2rgbArray(img)
+			elif toSpace=='CMYK':
+				img=rgb2cmykArray(hsv2rgbArray(img))
+			else:
+				raiseErr=True
+		else:
+			raiseErr=True
+	if raiseErr:
+		raise NotImplementedError('No conversion exists from colorspace "'+fromSpace+'" to "'+toSpace+'"')
+	return img
+	
 	
 def rgb2hsvImage(img):
 	"""
@@ -274,6 +397,10 @@ def hsv2rgbArray(hsv):
 		https://github.com/scikit-image/scikit-image/blob/master/skimage/color/colorconv.py
 	"""
 	hsv=numpyArray(hsv)
+	if len(hsv.shape)==2:
+		# this is a black and white image, so treat it as value, with zero hue and saturation
+		hs=np.empty((hsv.shape))
+		return np.dstack((hs,hs,hsv))
 	hi = np.floor(hsv[:, :, 0] * 6)
 	f = hsv[:, :, 0] * 6 - hi
 	p = hsv[:, :, 2] * (1 - hsv[:, :, 1])
@@ -405,14 +532,17 @@ def imageBorder(img,thickness,edge="#ffffff00"):
 	"""
 	Add a border of thickness pixels around the image
 
-	:param img: the image to add a border to
+	:param img: the image to add a border to can be pil image, numpy array, or whatever
 	:param thickness: the border thickness in pixels
 	:param edge: defines how to extend.  It can be:
 		mirror - reflect the pixels leading up to the border
 		repeat - repeat the image over again (useful with repeating textures)
 		clamp - streak last pixels out to edge
 		[background color] - simply fill with the given color
+	
+	TODO: combine into extendImageCanvas function
 	"""
+	img=pilImage(img)
 	if edge=='mirror':
 		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2))
 		# top
@@ -468,29 +598,29 @@ def imageBorder(img,thickness,edge="#ffffff00"):
 	elif edge=='clamp':
 		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2))
 		# top
-		fill=img.crop((0,0,img.width,1)).resize((img.width,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,0,img.width,1)).regetSize((img.width,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(thickness,0))
 		# bottom
-		fill=img.crop((0,img.height-1,img.width,img.height)).resize((img.width,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,img.height-1,img.width,img.height)).regetSize((img.width,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(thickness,img.height+thickness))
 		# left
-		fill=img.crop((0,0,1,img.height)).resize((thickness,img.height),resample=Image.NEAREST)
+		fill=img.crop((0,0,1,img.height)).regetSize((thickness,img.height),resample=Image.NEAREST)
 		newImage.paste(fill,(0,thickness))
 		# right
-		fill=img.crop((img.width-1,0,img.width,img.height)).resize((thickness,img.height),resample=Image.NEAREST)
+		fill=img.crop((img.width-1,0,img.width,img.height)).regetSize((thickness,img.height),resample=Image.NEAREST)
 		newImage.paste(fill,(img.width+thickness,thickness))
 		# TODO: corners
 		# top-left corner
-		fill=img.crop((0,0,1,1)).resize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,0,1,1)).regetSize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(0,0))
 		# top-right corner
-		fill=img.crop((img.width-1,0,img.width,1)).resize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((img.width-1,0,img.width,1)).regetSize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(img.width+thickness,0))
 		# bottom-left corner
-		fill=img.crop((0,img.height-1,1,img.height)).resize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,img.height-1,1,img.height)).regetSize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(0,img.height+thickness))
 		# bottom-right corner
-		fill=img.crop((img.width-1,img.height-1,img.width,img.height)).resize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((img.width-1,img.height-1,img.width,img.height)).regetSize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(img.width+thickness,img.height+thickness))
 	else:
 		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2),edge)
@@ -587,8 +717,66 @@ def paste(image,overImage,position=(0,0),resize=True):
 	else:
 		overImage.paste(image,(int(position[0]),int(position[1])))
 	return overImage
-	
 
+	
+def getSize(image):
+	"""
+	get the size of the image regardless of what kind it is
+	"""
+	if isinstance(image,Image.Image):
+		return image.width,image.height
+	return image.shape[1],image.shape[0]
+
+def makeSamegetSize(img1,img2,edge=(0,0,0,0)):
+	"""
+	pad the images with so they are the same size.  Commonly used for things like
+	resizing before blending
+	
+	:param img1: first image
+	:param img2: second image
+	:param edge: defines how to extend.  It can be:
+		mirror - reflect the pixels leading up to the border
+		repeat - repeat the image over again (useful with repeating textures)
+		clamp - streak last pixels out to edge
+		[background color] - simply fill with the given color
+		
+	:return: (img1,img2)
+	"""
+	size1=getSize(img1)
+	size2=getSize(img2)
+	if size1[0]<size2[0] or size1[0]<size2[0]:
+		img1=extendImageCanvas(img1,(max(size1[0],size2[0]),max(size1[1],size2[1])),edge)
+	if size2[0]<size1[0] or size2[0]<size1[0]:
+		img2=extendImageCanvas(img2,(max(size1[0],size2[0]),max(size1[1],size2[1])),edge)
+	return img1,img2
+	
+	
+def clip(img,size):
+	"""
+	clip an image to a given size
+	
+	:param size: can be an image, a (w,h), or a (x,y,w,h)
+	
+	:returns: image of the clipped size (or smaller)
+		can return None if selection is of zero size
+	"""	
+	region=None
+	img=numpyArray(img)
+	if (type(size) not in (list,tuple)) and (isinstance(size,np.ndarray)==False or len(size.shape)>1):
+		size=getSize(size)
+	imsize=getSize(img)
+	size[0]=min(size[0],imsize[0])
+	size[1]=min(size[1],imsize[1])
+	if len(size)<4:
+		if size[0]>0 and size[1]>0:
+			region=img[0:size[0]+1,0:size[1]+1]
+	else:
+		size[2]=min(size[0]+size[2],imsize[0])-size[0]
+		size[3]=min(size[1]+size[3],imsize[1])-size[1]
+		if size[2]>0 and size[3]>0:
+			region=img[size[0]:size[2]+1,size[1]:size[3]+1]
+	return region
+	
 #------------------ histograms
 
 
