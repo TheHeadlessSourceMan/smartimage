@@ -45,7 +45,7 @@ class SmartImage(Layer):
 		
 	@property
 	def numFrames(self):
-		return (self.xml.xpath('//*/frame'))
+		return len(self.xml.xpath('//*/frame'))
 		
 	@property
 	def page(self,pageNumber):
@@ -74,7 +74,9 @@ class SmartImage(Layer):
 		ret=None
 		p=self.numPages
 		f=self.numFrames
-		if type(idxOrSlice)==tuple: # it's a slice
+		if f==0 and p==0:
+			return self
+		elif type(idxOrSlice)==tuple: # it's a slice
 			start,end=idxOrSlice
 			if start<0:
 				start+=self.__len__()

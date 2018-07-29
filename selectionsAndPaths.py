@@ -169,6 +169,8 @@ def strToColor(s):
 	"""
 	import struct
 	if type(s) not in [str,unicode]:
+		if type(s)==tuple:
+			s=[ch for ch in s]
 		return s
 	if s in HTML_COLOR_NAMES:
 		s=HTML_COLOR_NAMES[s]
@@ -245,18 +247,25 @@ def matchColorToImage(color,img):
 	match the color to the image mode
 	"""
 	imgChan=img.shape[-1]
-	colChan=len(color)
-	if imgChan>colChan:
-		raise NotImplementedError("Don't know how to convert color["+str(len(color))+"] to image pixel["+str(img.shape[-1])+"]")
-	elif imgChan<colChan:
-		color=color[0:imgChan]
-	imgFloat=isFloat(img)
-	colFloat=isFloat(color)
-	if imgFloat!=colFloat:
-		if imgFloat:
-			color=np.array(color)/255.0
-		else:
-			color=np.int(np.array(color)*255)
+	if type(color) in [float,int]:
+		if isFloat(img):
+			if type(color)!=float:
+				color=color/255.0
+		elif type(color)!=int:
+			color=int(color*255)
+	else:
+		colChan=len(color)
+		if imgChan>colChan:
+			raise NotImplementedError("Don't know how to convert color["+str(len(color))+"] to image pixel["+str(img.shape[-1])+"]")
+		elif imgChan<colChan:
+			color=color[0:imgChan]
+		imgFloat=isFloat(img)
+		colFloat=isFloat(color)
+		if imgFloat!=colFloat:
+			if imgFloat:
+				color=np.array(color)/255.0
+			else:
+				color=np.int(np.array(color)*255)
 	return color
 	
 	

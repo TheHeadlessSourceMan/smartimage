@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartimage>
+	<solid color="#00AA00" w="200" h="200" x="0" y="0" />
+	<texture type="clouds" w="200" h="200" x="200" y="0" />
+	<texture noise="0.15" direction="45" frequency="5" w="200" h="200" x="400" y="0" />
+	<texture noise="0.15" direction="circular" frequency="10" w="200" h="200" x="600" y="0" />
+	
+	<texture noise="0" direction="circular" frequency="0.5" w="200" h="200" x="0" y="200" />
+	<texture type="voronoi" w="200" h="200" x="200" y="200" />
+	<texture type="voronoi" invert="true" w="200" h="200" x="400" y="200" />
+	<texture type="clock" waveform="sine" w="200" h="200" x="600" y="200" />
+	
+</smartimage>

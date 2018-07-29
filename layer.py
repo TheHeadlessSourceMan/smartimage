@@ -242,6 +242,12 @@ class Layer(XmlBackedObject,Bounds):
 		elif xml.tag=='solid':
 			import solidLayer
 			child=solidLayer.Solid(doc,parent,xml)
+		elif xml.tag=='texture':
+			import textureLayer
+			child=textureLayer.Texture(doc,parent,xml)
+		elif xml.tag=='pattern':
+			import patternLayer
+			child=patternLayer.Pattern(doc,parent,xml)
 		else:
 			raise Exception('ERR: unknown element, "'+xml.tag+'"')
 		return child

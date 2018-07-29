@@ -288,6 +288,9 @@ def changeColorspace(img,toSpace='RGB',fromSpace=None):
 	:param img: the image to convert
 	:param toSpace: space to convert to
 	:param fromSpace: space to convert from - guess from img if None
+	
+	NOTE: for more colorspace conversions than you can shake a chameleon at:
+		http://colormine.org/
 	"""
 	img=numpyArray(img)
 	if fromSpace==None:
@@ -344,6 +347,9 @@ def rgb2hsvArray(rgb):
 		https://github.com/scikit-image/scikit-image/blob/master/skimage/color/colorconv.py
 	"""
 	rgb=numpyArray(rgb)
+	singleColor=len(rgb.shape)==1
+	if singleColor: # convert to one-pixel image
+		rgb=np.array([[rgb]])
 	out = np.empty_like(rgb)
 	# -- V channel
 	out_v = rgb.max(-1)
@@ -372,6 +378,8 @@ def rgb2hsvArray(rgb):
 	out[:, :, 2] = out_v
 	# remove NaN
 	out[np.isnan(out)] = 0
+	if singleColor:
+		out=out[0,0]
 	return out
 
 	
@@ -512,18 +520,32 @@ def clampImage(img,minimum=None,maximum=None):
 	if type(img)!=np.ndarray:
 		if minimum!=None and minimum!=0 and maximum!=None and maximum!=255:
 			return img
-		img=numpyArray(img,type(maximum)==float)
+		img=numpyArray(img)
 	if isFloat(img):
-		if minimum==None:
-			minimum=0.0
-		if maximum==None:
-			maximum=1.0
+		minval=0.0
+		maxval=1.0
 	else:
-		if minimum==None:
-			minimum=0
-		if maximum==None:
-			maximum=255
-	return np.clip(img,minimum,maximum)
+		minval=0
+		maxval=255
+	if minimum==None:
+		minimum=minval
+	if maximum==None:
+		maximum=maxval
+	return np.where(img<minimum,minval,np.where(img>maximum,maxval,img))
+
+	
+def grayscale(img):
+	"""
+	convert any image to grayscale
+	
+	NOTE: and TODO:
+		There are many different ways to go about this. Which is the best?
+		http://www.tannerhelland.com/3643/grayscale-image-algorithm-vb6/
+	"""
+	img=numpyArray(img)
+	if len(img.shape)>2:
+		img=img.max(-1)
+	return img
 	
 #------------------------ image size manipulation
 
@@ -751,13 +773,13 @@ def makeSamegetSize(img1,img2,edge=(0,0,0,0)):
 	return img1,img2
 	
 	
-def clip(img,size):
+def crop(img,size):
 	"""
-	clip an image to a given size
+	crop an image to a given size
 	
 	:param size: can be an image, a (w,h), or a (x,y,w,h)
 	
-	:returns: image of the clipped size (or smaller)
+	:returns: image of the cropped size (or smaller)
 		can return None if selection is of zero size
 	"""	
 	region=None
@@ -771,10 +793,11 @@ def clip(img,size):
 		if size[0]>0 and size[1]>0:
 			region=img[0:size[0]+1,0:size[1]+1]
 	else:
-		size[2]=min(size[0]+size[2],imsize[0])-size[0]
-		size[3]=min(size[1]+size[3],imsize[1])-size[1]
+		# NOTE: slicing wants x2,y2 not w,h so there is a conversion here
+		size[2]=min(size[2]+size[0],imsize[0])
+		size[3]=min(size[1]+size[3],imsize[1])
 		if size[2]>0 and size[3]>0:
-			region=img[size[0]:size[2]+1,size[1]:size[3]+1]
+			region=img[size[0]:size[2],size[1]:size[3]]
 	return region
 	
 #------------------ histograms

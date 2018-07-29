@@ -91,13 +91,13 @@ def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=Tru
 		Notes:
 			* Case sensitive
 			* All values are percent values from 0..1
-			* After this operation, values will be clipped to 0..1
+			* After this operation, values will be cropped to 0..1
 			* Functions have two modes.
 				They work between two channels if two given.
 				If one given, they work on all values of that channel.
 		~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		Examples:
-			RGB=topRGB/bottomRGB ... simple divide blend mode
+			RGB=top.RGB/bottom.RGB ... simple divide blend mode
 			RGB=min(topRGB,bottomRGB) ... min blend mode
 			RGB=(topRGB-min(topRGB)) ... use min in the other mode to normalize black values
 			A=1-topV ... extract inverted black levels to alpha channel
@@ -130,11 +130,11 @@ def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=Tru
 			break
 	botRGBA=np.asarray(botImage)/shift
 	for tag in 'HSV':
-		if equation.find('bot'+tag)>=0:
+		if equation.find('bottom'+tag)>=0:
 			botHSV=rgb2hsvArray(botRGBA)
 			break
 	for tag in 'CMYK':
-		if equation.find('bot'+tag)>=0:
+		if equation.find('bottom'+tag)>=0:
 			botCMYK=rgb2cmykArray(botRGBA)
 			break
 	# convert the equation into python code
@@ -147,12 +147,12 @@ def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=Tru
 		'count':'np.count','sum':'np.sum',
 		'sin':'np.sin','cos':'np.cos','tan':'np.tan',
 		'if':'np.where',
-		'topRGB':'topRGBA[:,:,:3]','topR':'topRGBA[:,:,0]','topR':'topRGBA[:,:,1]','topR':'topRGBA[:,:,2]','topA':'topRGBA[:,:,3]',
-		'topCMY':'topCMYK[:,:,:3]','topC':'topCMYK[:,:,0]','topM':'topCMYK[:,:,1]','topY':'topCMYK[:,:,2]','topK':'topCMYK[:,:,3]',
-		'topH':'topHSV[:,:,0]','topS':'topHSV[:,:,1]','topV':'topHSV[:,:,2]',
-		'botRGB':'botRGBA[:,:,:3]','botR':'botRGBA[:,:,0]','botR':'botRGBA[:,:,1]','botR':'botRGBA[:,:,2]','botA':'botRGBA[:,:,3]',
-		'botCMY':'botCMYK[:,:,:3]','botC':'botCMYK[:,:,0]','botM':'botCMYK[:,:,1]','botY':'botCMYK[:,:,2]','botK':'botCMYK[:,:,3]',
-		'botH':'botHSV[:,:,0]','botS':'botHSV[:,:,1]','botV':'botHSV[:,:,2]',
+		'top.RGBA':'topRGBA[:,:,:]','top.RGB':'topRGBA[:,:,:3]','top.R':'topRGBA[:,:,0]','top.R':'topRGBA[:,:,1]','top.R':'topRGBA[:,:,2]','top.A':'topRGBA[:,:,3]',
+		'top.CMYK':'topCMYK[:,:,:]','top.CMY':'topCMYK[:,:,:3]','top.C':'topCMYK[:,:,0]','top.M':'topCMYK[:,:,1]','top.Y':'topCMYK[:,:,2]','top.K':'topCMYK[:,:,3]',
+		'top.HSV':'topHSV[:,:,:]','top.H':'topHSV[:,:,0]','topS':'topHSV[:,:,1]','topV':'topHSV[:,:,2]',
+		'bottom.RGBA':'bottomRGBA[:,:,:]','bottom.RGB':'bottomRGBA[:,:,:3]','bottom.R':'bottomRGBA[:,:,0]','bottom.R':'bottomRGBA[:,:,1]','bottom.R':'bottomRGBA[:,:,2]','bottom.A':'bottomRGBA[:,:,3]',
+		'bottom.CMYK':'bottomCMYK[:,:,:]','bottom.CMY':'bottomCMYK[:,:,:3]','bottom.C':'bottomCMYK[:,:,0]','bottom.M':'bottomCMYK[:,:,1]','bottom.Y':'bottomCMYK[:,:,2]','bottom.K':'bottomCMYK[:,:,3]',
+		'bottom.HSV':'bottomHSV[:,:,:]','bottom.H':'bottomHSV[:,:,0]','bottom.S':'bottomHSV[:,:,1]','bottom.V':'bottomHSV[:,:,2]',
 	}
 	for i in range(len(equation)):
 		if len(equation[i])>0 and equation[i][0] not in r'0123456789,()%*-+/!<>=|&':
@@ -216,91 +216,91 @@ def blend(image,blendMode,overImage,position=(0,0),resize=True):
 
 	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
 	"""
-	def _normal(Cb,Cs):
-		return Cs
-	def _multiply(Cb,Cs):
-		return Cb*Cs
-	def _screen(Cb,Cs):
-		return Cb+Cs-(Cb*Cs)
-	def _dissolve(Cb,Cs):
+	def _normal(bottom,top):
+		return top
+	def _multiply(bottom,top):
+		return bottom*top
+	def _screen(bottom,top):
+		return bottom+top-(bottom*top)
+	def _dissolve(bottom,top):
 		# TODO: there is a bug.  instead of randomly merging pixels, it randomly merges color values
-		rand=np.random.random(Cb.shape)
-		return np.where(rand>0.5,Cb,Cs)
-	def _darken(Cb,Cs):
-		return np.minimum(Cb,Cs)
-	def _colorBurn(Cb,Cs):
+		rand=np.random.random(bottom.shape)
+		return np.where(rand>0.5,bottom,top)
+	def _darken(bottom,top):
+		return np.minimum(bottom,top)
+	def _colorBurn(bottom,top):
 		# NOTE: gimp "burn" is a colorBurn, not a linearBurn
-		return 1.0-((1.0-Cs)/Cb)
-	def _linearBurn(Cb,Cs):
-		return Cb+Cs-1.0
-	def _lighten(Cb,Cs):
-		return np.maximum(Cb,Cs)
-	def _colorDodge(Cb,Cs):
+		return 1.0-((1.0-top)/bottom)
+	def _linearBurn(bottom,top):
+		return bottom+top-1.0
+	def _lighten(bottom,top):
+		return np.maximum(bottom,top)
+	def _colorDodge(bottom,top):
 		# NOTE: gimp "dodge" is a colorDodge, not a linearDodge
-		return Cs/(1.0-Cb)
-	def _linearDodge(Cb,Cs):
-		return Cs+Cb
-	def _overlay(Cb,Cs):
+		return top/(1.0-bottom)
+	def _linearDodge(bottom,top):
+		return top+bottom
+	def _overlay(bottom,top):
 		# TODO: the colors saturation comes out a little higher than gimp, but close
-		return np.where(Cs<=0.5,2.0*Cb*Cs,1.0-2.0*(1.0-Cb)*(1.0-Cs))
-	def _hardOverlay(Cb,Cs):
+		return np.where(top<=0.5,2.0*bottom*top,1.0-2.0*(1.0-bottom)*(1.0-top))
+	def _hardOverlay(bottom,top):
 		# this is a krita thing
-		return np.where(Cb>0.5,_multiply(Cs,2.0*Cb),_divide(Cs,2.0*Cb-1.0))
-	def _hardLight(Cb,Cs):
-		return np.where(Cb<=0.5,_multiply(Cs,2.0*Cb),_screen(Cs,2.0*Cb-1.0))
-	def _vividLight(Cb,Cs):
-		return np.where(Cs>0.5,_colorDodge(Cb,Cs),_colorBurn(Cb,Cs))
-	def _linearLight(Cb,Cs):
-		return np.where(Cs>0.5,_linearDodge(Cb,Cs),_linearBurn(Cb,Cs))
-	def _pinLight(Cb,Cs):
+		return np.where(bottom>0.5,_multiply(top,2.0*bottom),_divide(top,2.0*bottom-1.0))
+	def _hardLight(bottom,top):
+		return np.where(bottom<=0.5,_multiply(top,2.0*bottom),_screen(top,2.0*bottom-1.0))
+	def _vividLight(bottom,top):
+		return np.where(top>0.5,_colorDodge(bottom,top),_colorBurn(bottom,top))
+	def _linearLight(bottom,top):
+		return np.where(top>0.5,_linearDodge(bottom,top),_linearBurn(bottom,top))
+	def _pinLight(bottom,top):
 		# NOTE: I think this is right...?
-		return np.where(Cb>0.5,_darken(Cb,Cs),_lighten(Cb,Cs))
-	def _hardMix(Cb,Cs):
+		return np.where(bottom>0.5,_darken(bottom,top),_lighten(bottom,top))
+	def _hardMix(bottom,top):
 		# NOTE: I think this is right...?
-		return np.where(Cb>0.5,1.0,0.0)
-	def _difference(Cb,Cs):
-		return np.abs(Cb-Cs)
-	def _softLight(Cb,Cs):
+		return np.where(bottom>0.5,1.0,0.0)
+	def _difference(bottom,top):
+		return np.abs(bottom-top)
+	def _softLight(bottom,top):
 		# NOTE: strangely both algos do the same thing, but look different than gimp
 		#	yet the last algo is deliberately backwards, and that's what gimp does.  Is gimp backwards??
 		def D(x):
 			return np.where(x<=0.25,((16*x-12)*x+4)*x,np.sqrt(x))
-		#return np.where(Cs<=0.5,Cb-(1.0-2.0*Cs)*Cb*(1.0-Cb),Cb+(2.0*Cs-1)*(D(Cb)-Cb))
-		#return (1.0-Cb)*Cb*Cs+Cb*(1.0-(1.0-Cb)*(1.0-Cs))
-		return (1.0-Cs)*Cs*Cb+Cs*(1.0-(1.0-Cs)*(1.0-Cb))
-	def _exclusion(Cb,Cs):
-		return Cb+Cs-2.0*Cb*Cs
-	def _subtract(Cb,Cs):
+		#return np.where(top<=0.5,bottom-(1.0-2.0*top)*bottom*(1.0-bottom),bottom+(2.0*top-1)*(D(bottom)-bottom))
+		#return (1.0-bottom)*bottom*top+bottom*(1.0-(1.0-bottom)*(1.0-top))
+		return (1.0-top)*top*bottom+top*(1.0-(1.0-top)*(1.0-bottom))
+	def _exclusion(bottom,top):
+		return bottom+top-2.0*bottom*top
+	def _subtract(bottom,top):
 		# NOTE:  You'd think the first algo would be correct, but gimp has it the opposite way
-		#return Cb-Cs
-		return Cs-Cb
-	def _grainExtract(Cb,Cs):
+		#return bottom-top
+		return top-bottom
+	def _grainExtract(bottom,top):
 		# NOTE:  You'd think the first algo would be correct, but gimp has it the opposite way
-		#return Cb-Cs+0.5
-		return Cs-Cb+0.5
-	def _grainMerge(Cb,Cs):
-		return Cb+Cs-0.5
-	def _divide(Cb,Cs):
+		#return bottom-top+0.5
+		return top-bottom+0.5
+	def _grainMerge(bottom,top):
+		return bottom+top-0.5
+	def _divide(bottom,top):
 		# NOTE:  You'd think the first algo would be correct, but gimp has it the opposite way
-		#return Cb/Cs
-		return Cs/Cb
-	def _hue(Cb,Cs):
-		CbH=rgb2hsvArray(Cb)
-		CsH=rgb2hsvArray(Cs)
-		return hsv2rgbArray(np.dstack((CbH[:,:,0],CsH[:,:,1:])))
-	def _saturation(Cb,Cs):
-		CbH=rgb2hsvArray(Cb)
-		CsH=rgb2hsvArray(Cs)
-		return hsv2rgbArray(np.dstack((CsH[:,:,0],CbH[:,:,1],CsH[:,:,2])))
-	def _value(Cb,Cs):
-		CbH=rgb2hsvArray(Cb)
-		CsH=rgb2hsvArray(Cs)
-		return hsv2rgbArray(np.dstack((CsH[:,:,:2],CbH[:,:,2])))
-	def _color(Cb,Cs):
+		#return bottom/top
+		return top/bottom
+	def _hue(bottom,top):
+		bottomH=rgb2hsvArray(bottom)
+		topH=rgb2hsvArray(top)
+		return hsv2rgbArray(np.dstack((bottomH[:,:,0],topH[:,:,1:])))
+	def _saturation(bottom,top):
+		bottomH=rgb2hsvArray(bottom)
+		topH=rgb2hsvArray(top)
+		return hsv2rgbArray(np.dstack((topH[:,:,0],bottomH[:,:,1],topH[:,:,2])))
+	def _value(bottom,top):
+		bottomH=rgb2hsvArray(bottom)
+		topH=rgb2hsvArray(top)
+		return hsv2rgbArray(np.dstack((topH[:,:,:2],bottomH[:,:,2])))
+	def _color(bottom,top):
 		# TODO: Very close, but seems to lose some blue values compared to gimp
-		CbH=rgb2hsvArray(Cb)
-		CsH=rgb2hsvArray(Cs)
-		return hsv2rgbArray(np.dstack((CbH[:,:,:2],CsH[:,:,2])))
+		bottomH=rgb2hsvArray(bottom)
+		topH=rgb2hsvArray(top)
+		return hsv2rgbArray(np.dstack((bottomH[:,:,:2],topH[:,:,2])))
 
 	#------------------------------------
 
