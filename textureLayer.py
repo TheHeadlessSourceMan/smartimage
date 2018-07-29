@@ -123,7 +123,9 @@ class Texture(Layer):
 			img=clock2(self.size,self.waveform,self.frequency,self.noise,self.noiseBasis,self.noiseOctaves,self.noiseSoften,self.direction,self.invert)
 		else:
 			raise NotImplementedError(self.type)
-		return pilImage(img)
+		img=pilImage(img)
+		img.immutable=True # mark this image so that compositor will not alter it
+		return img
 
 
 if __name__ == '__main__':

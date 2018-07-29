@@ -59,6 +59,7 @@ A format and reference implementation for multilayer images that can be used as 
 	<li>Automatic heatmap-based rescaling. NICE!</li>
 	<li>Solid color layers.</li>
 	<li>Image layers.</li>
+	<li>Procedural Textures.</li>
 	<li>Entirely "non-destructive" in that all layers and effects can be altered after-the-fact.</li>
 	<li>Modifier layers (not all modifiers finalized/tested).</li>
 	<li>Text layers.</li>
@@ -74,6 +75,7 @@ A format and reference implementation for multilayer images that can be used as 
 
 <h2>TODO:</h2>
 <div class='indent'>
+	<li>BUG: procedural textures work fine alone but affect one another when more than one is used</li>
 	<li>need to have layers that extend beyond image for things like rotation</li>
 	<li>convert all layers from psd using <a href="https://github.com/kyamagu/psd-tools2">psd-tools</a></li>
 	<li>need to translate font friendly names to file names "Viner Hand ITC Regular" -&gt; "VINERITC.TTF"</li>
@@ -82,5 +84,6 @@ A format and reference implementation for multilayer images that can be used as 
 	<li>gimp/photoshop plugin to read this format?</li>
 	<li>dragdrop handler that uses auto-assign variables</li>
 	<li><a href="https://www.w3.org/Graphics/SVG/">SVG</a> loading</li>
-	</body>
+</div>
+</body>
 </html>

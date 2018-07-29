@@ -545,8 +545,8 @@ def smoothNoise(size=(256,256),undersize=0.5):
 	and then scaling it up
 	"""
 	noise=np.random.random((int(size[0]*undersize),int(size[0]*undersize)))
-	print "SIZE",size
-	noise=scipy.misc.imresize(noise,(int(size[0]),int(size[1])),interp='bilinear')/255.0
+	if undersize!=0:
+		noise=scipy.misc.imresize(noise,(int(size[0]),int(size[1])),interp='bilinear')/255.0
 	return noise
 	
 def turbulence(size=(256,256),turbSize=None):
@@ -557,12 +557,13 @@ def turbulence(size=(256,256),turbSize=None):
 	"""
 	if turbSize==None:
 		turbSize=max(size)/10.0
-	value = 0.0
+	value=0.0
 	img=np.ndarray((int(size[0]),int(size[1])))
 	s=turbSize
-	while s>=1:
-		img=img+smoothNoise(size,s/turbSize)/s
-		s/=2
+	while s>=1.0:
+		noise=smoothNoise(size,s/turbSize)/s
+		img=img+noise
+		s/=2.0
 	return normalize(img)
 	
 def marble(size=(256,256),xPeriod=3.0,yPeriod=10.0,turbPower=0.8,turbSize=None):
@@ -616,9 +617,12 @@ def waveformTexture(size=(256,256),waveform="sine",frequency=(10,10),noise=0.2,n
 	turb=turbulence(size,noiseSize)*noise
 	if direction=='circular':
 		dc=normalize(deltaC(size,magnitude=True))
-		xyPeriod=(w/frequency[0]+h/frequency[1])/2.0
+		xyPeriod=frequency[0]#(w/frequency[0]+h/frequency[1])/2.0
 		img=np.abs(np.sin(xyPeriod*(dc+turb)*math.pi))
+		invert=invert==False # flip invert to look more as expected
 	else:
+		xPeriod=frequency[0]/2.0
+		yPeriod=frequency[1]/2.0
 		# determine where the pixels will cycle
 		cycleValue=np.ndarray((w,h))
 		for y in range(h):
