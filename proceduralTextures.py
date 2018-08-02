@@ -59,7 +59,6 @@ def perlinNoiseX(x,y,seed=0):
 def callPerlinX():
 	lin = np.linspace(0,5,256,endpoint=False)
 	x,y = np.meshgrid(lin,lin)
-	print x
 	img=perlinNoise(x,y,seed=2)
 	
 	
@@ -123,15 +122,7 @@ def perlinNoise(w,h,octaves=None):
 #ret=scipy.ndimage.generic_filter(ret,f,size=None,footprint=(1),output=None,mode='reflect',cval=0.0, origin=0, extra_arguments=(), extra_keywords=None)
 	
 	
-def _sinwave(theta):
-	0.5+0.5*sin(theta)
-def _triwave(theta):
-	b = 2*pi
-	n = int(a / b)
-	a -= n*b
-	if a<0:
-		a+=b
-	return a/b
+
 	
 def cartesian2PolarX(img,order=1):
 	"""
@@ -205,11 +196,6 @@ def displaceImage(img,displacementMap,distance=10,angle=45):
 	img=scipy.ndimage.geometric_transform(img,dissp,mode='nearest')
 	return img
 	
-def normalize(img):
-	img=img-np.min(img)
-	img=img/np.max(img)
-	return img
-	
 def combine(img1,img2):
 	return (img1+img2)/2.0
 	
@@ -253,6 +239,7 @@ def filmGrain(img,amount=None,iso=None):
 		https://hal.archives-ouvertes.fr/hal-01494123v2/document
 		http://www.dctsystems.co.uk/Text/grain.pdf
 	"""
+	pass
 	
 def colormap(img,colors=None):
 	"""
@@ -305,7 +292,6 @@ def colormap(img,colors=None):
 				percent=(img-lastColor[0])*lastColor[0]/color[0]
 				img2=np.where(np.logical_and(img>lastColor[0],img<=color[0]),(color[1]*percent)+(lastColor[1]*(1-percent)),img2)
 			lastColor=color
-		print img
 		img2=np.where(img>lastColor[0],lastColor[1],img2)
 	else:
 		def gradMap(c):
@@ -327,30 +313,6 @@ GRADIENT_BLACK_TO_WHITE=[(0.0,(0.0,0.0,0.0)),(1.0,(1.0,1.0,1.0))]
 GRADIENT_CLEAR_TO_WHITE=[(0.0,(1.0,1.0,1.0,0.0)),(1.0,(1.0,1.0,1.0,1.0))]
 GRADIENT_CLEAR_TO_BLACK=[(0.0,(0.0,0.0,0.0,0.0)),(1.0,(0.0,0.0,0.0,1.0))]
 GRADIENT_RAINBOW=[(0.0,(1.0,0.0,0.0)),(0.2,(1.0,0.75,0.0)),(0.4,(1.0,1.0,0.0)),(0.6,(0.0,1.0,0.0)),(0.8,(0.0,0.0,1.0)),(1.0,(0.8,0.0,1.0))]
-
-
-def sinewave(src,(x,y),w=255):
-	return np.sin(math.pi*x/w)
-	
-def ball(src,(x,y),w=255,h=255,cornerBased=False):
-	center=(w/2,h/2)
-	magnitude=np.sqrt(np.power(x-center[0],2)+np.power(y-center[1],2))
-	if cornerBased:
-		maxmag=math.sqrt(center[0]**2+center[1]**2)*2
-	else:
-		maxmag=max(center)*2
-	val=np.cos(math.pi*magnitude/maxmag)
-	return val
-	
-def cone(src,(x,y),w=255,h=255,cornerBased=False):
-	center=(w/2,h/2)
-	magnitude=np.sqrt(np.power(x-center[0],2)+np.power(y-center[1],2))
-	if cornerBased:
-		maxmag=math.sqrt(center[0]**2+center[1]**2)*2
-	else:
-		maxmag=max(center)*2
-	val=1-magnitude/maxmag
-	return val
 	
 def deltaC(size,center=None,magnitude=False):
 	"""
@@ -364,10 +326,14 @@ def deltaC(size,center=None,magnitude=False):
 	if center==None:
 		center=size[0]/2.0,size[1]/2.0
 	if magnitude:
-		img=np.ndarray((size[0],size[1]))
-		for x in range(size[0]):
-			for y in range(size[1]):
-				img[x,y]=math.sqrt((x-center[0])**2+(y-center[1])**2)
+		if False:
+			# old way, non-vector
+			img=np.ndarray((size[0],size[1]))
+			for x in range(size[0]):
+				for y in range(size[1]):
+					img[x,y]=math.sqrt((x-center[0])**2+(y-center[1])**2)
+		else:
+			img=np.sqrt((np.arange(size[0])-center[0])**2+(np.arange(size[1])[:,None]-center[1])**2)
 	else:
 		img=np.ndarray((size[0],size[1],2))
 		for x in range(size[0]):
@@ -410,40 +376,22 @@ def distance(src):
 def valueRotate(img,amount=0.5):
 	return np.mod(np.clip(img,0.0,1.0)+amount,1.0)
 	
-def flip90(src,(x,y)):
-	return src[y,x]
-	
-def repeat(src,(x,y),n=2):
-	src=src[x,y]*n%2
-	if src<=1:
-		return 1-src
-	return src-1
-
-def apply(fn,img=None,**params):
-	"""
-	apply a transformation to an image
-	
-	:param fn: a function that takes (x,y) and returns a value 0.0 to 1.0
-	:param img: an image to apply the function to
-	"""
-	if type(img)==type(None):
-		img=np.ndarray((256,256))
-	newimg=np.ndarray(img.shape)
-	for x in range(img.shape[0]):
-		for y in range(img.shape[1]):
-			newimg[x,y]=fn(img,(x,y),**params)
-	return newimg
+def flip90(src):
+	return np.transpose(src)
 	
 def preview(img):
 	"""
 	this is a utility to do image previews
 	
 	It was created because stinking photoshop always took over the pil Image.show()
+	
+	TODO: this belongs in a different file
 	"""
 	mode='pilShow'
 	#mode='save'
 	#mode='windowsPhotoViewer'
 	# ------
+	img=pilImage(img)
 	if mode=='pilShow':
 		pilImage(img).show()
 	elif mode=='save':
@@ -470,17 +418,17 @@ def preview(img):
 		time.sleep(2.5)
 		os.remove(path)
 	
-def highlights(img,level=0.9):
+def highlights(img,threshold=0.9):
 	"""
 	return a mask of all highlights
 	"""
-	return np.where(img<level,0,img)
+	return np.where(img<threshold,0,img)
 	
-def shadows(img,level=0.1):
+def shadows(img,threshold=0.1):
 	"""
 	return a mask of all shadows
 	"""
-	return np.where(img>level,0,1-img)
+	return np.where(img>threshold,0,1-img)
 	
 def streak(img,size=15):
 	return img+directionalBlur(highlights(img,.95),size)
@@ -514,6 +462,9 @@ def voronoi(size=(256,256),npoints=30,mode='twoNearestDiff',invert=False):
 	
 	see also:
 		http://blackpawn.com/texts/cellular/default.html
+	
+	TODO: this could be optomized usinf a cKDtree
+		https://stackoverflow.com/questions/10818546/finding-index-of-nearest-point-in-numpy-arrays-of-x-and-y-coordinates
 	"""
 	size=(int(size[0]),int(size[1]))
 	img=np.ndarray(size) 
@@ -533,6 +484,8 @@ def voronoi(size=(256,256),npoints=30,mode='twoNearestDiff',invert=False):
 		#smallest=np.argsort(dist,axis=1)
 		smallest=np.argpartition(dist,2,axis=1)[:,0:2] # faster because it stops sorting after 2
 		img=dist[:,smallest[:,1]]*dist[:,smallest[:,0]]
+	else:
+		raise NotImplementedError('mode="'+mode+'"')
 	# convert pixel list back into 2d array
 	img=normalize(img.reshape((size[0],size[1])))
 	if invert:
@@ -558,11 +511,14 @@ def turbulence(size=(256,256),turbSize=None):
 	if turbSize==None:
 		turbSize=max(size)/10.0
 	value=0.0
-	img=np.ndarray((int(size[0]),int(size[1])))
+	img=None
 	s=turbSize
 	while s>=1.0:
 		noise=smoothNoise(size,s/turbSize)/s
-		img=img+noise
+		if type(img)==type(None):
+			img=noise
+		else:
+			img=img+noise
 		s/=2.0
 	return normalize(img)
 	
@@ -615,10 +571,22 @@ def waveformTexture(size=(256,256),waveform="sine",frequency=(10,10),noise=0.2,n
 	w,h=size
 	noiseSize=max(size)/8 # TODO: pass this value in somehow
 	turb=turbulence(size,noiseSize)*noise
+	if waveform.startswith('sine'):
+		def sin(x):
+			return np.abs(np.sin(x*math.pi))
+		fn=sin
+	elif waveform.startswith('tri'):
+		fn=deltaFromGray
+	elif waveform.startswith('saw'):
+		def saw(x):
+			return x
+		fn=saw
+	else:
+		raise NotImplementedError()
 	if direction=='circular':
 		dc=normalize(deltaC(size,magnitude=True))
 		xyPeriod=frequency[0]#(w/frequency[0]+h/frequency[1])/2.0
-		img=np.abs(np.sin(xyPeriod*(dc+turb)*math.pi))
+		img=fn(xyPeriod*(dc+turb))
 		invert=invert==False # flip invert to look more as expected
 	else:
 		xPeriod=frequency[0]/2.0
@@ -628,8 +596,8 @@ def waveformTexture(size=(256,256),waveform="sine",frequency=(10,10),noise=0.2,n
 		for y in range(h):
 			for x in range(w):
 				cycleValue[x,y]=(x*xPeriod/w)+(y*yPeriod/h)
-		# add in the turbulence and then last of all, make it a sinewave
-		img=np.abs(np.sin((cycleValue+turb)*math.pi))
+		# add in the turbulence and then last of all, make it a wave
+		img=fn(cycleValue+turb)
 	img=normalize(img)
 	if invert:
 		img=1.0-img
@@ -755,16 +723,34 @@ def line(img,(x,y),(x2,y2),thick=1,color=1):
 	return img
 	
 def dilate(img,size=3):
+	"""
+	implement image dilation
+	
+	TODO: does not belong in this file!
+	"""
 	return scipy.ndimage.grey_dilation(img,size=(size,size))
+	
+def arbitraryWave(wave,fromT,toT,mirror=False):
+	"""
+	evaluate arbitrary waveform between two points
+	
+	see also:
+		https://docs.scipy.org/doc/scipy/reference/interpolate.html
+	"""
+	pass
 	
 def circularBlur(img):
 	"""
+	blur in a radial manner
+	
 	http://chemaguerra.com/circular-radial-blur/
 	"""
 	pass
 	
 def zoomBlur(img):
 	"""
+	blur in a zoom manner
+	
 	http://chemaguerra.com/circular-radial-blur/
 	"""
 	pass
@@ -773,11 +759,10 @@ def zoomBlur(img):
 if __name__ == '__main__':
 	img=woodRings()
 	img=streak(img)
-	#img=apply(flip90,img)
+	#img=flip90(img)
 	#img=x()
 	#img=dilate(img)
 	img=np.clip(img,0.0,1.0)
-	img=Image.fromarray(np.uint8(img*255))
 	#img1=waveImage(500,500)
 	#img1=warpRotate(img1,-45)
 	#img1=warpCircle(img1)

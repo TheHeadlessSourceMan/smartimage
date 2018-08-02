@@ -111,8 +111,10 @@ class Texture(Layer):
 
 	@property
 	def image(self):
+		import time
+		start=time.time()
 		if self.type=='voronoi':
-			img=voronoi(self.size,self.numPoints,'squared',self.invert)
+			img=voronoi(self.size,self.numPoints,'simple',self.invert)
 		elif self.type=='random':
 			img=smoothNoise(self.size,1.0-self.soften)
 		elif self.type=='clouds':
@@ -125,6 +127,8 @@ class Texture(Layer):
 			raise NotImplementedError(self.type)
 		img=pilImage(img)
 		img.immutable=True # mark this image so that compositor will not alter it
+		end=time.time()
+		print self.name,end-start,'s'
 		return img
 
 
