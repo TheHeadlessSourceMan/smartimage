@@ -4,7 +4,7 @@
 This is a layer for creating procedural textures
 """
 from layer import *
-from proceduralTextures import *
+from imgTools import *
 
 
 class Texture(Layer):
@@ -157,6 +157,6 @@ if __name__ == '__main__':
 				print 'ERR: unknown argument "'+arg+'"'
 	if printhelp:
 		print 'Usage:'
-		print '  textureLayer.py [options]'
+		print '  texture.py [options]'
 		print 'Options:'
 		print '   NONE'

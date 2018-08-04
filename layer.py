@@ -4,7 +4,7 @@
 The base class for image layers
 """
 from PIL import Image
-from compositor import *
+from imgTools import *
 from xmlBackedObject import *
 from bounds import Bounds
 import math
@@ -84,7 +84,11 @@ class RenderingContext(object):
 			bounds.rotateFit(layer.rotate)
 			image=extendImageCanvas(image,bounds)
 			image=image.rotate(layer.rotate)
-		self.log('info',layer.name,'mode='+image.mode,'bounds='+str((0,0,image.width,image.height)))
+		# logging
+		if image==None:
+			self.log('info',layer.name,'NULL IMAGE')
+		else:
+			self.log('info',layer.name,'mode='+image.mode,'bounds='+str((0,0,image.width,image.height)))
 		self.log('finished',layer.name)
 		# pop off tracking info for this layer
 		del self.visitedLayers[-1]
@@ -162,7 +166,6 @@ class Layer(XmlBackedObject,Bounds):
 			else:
 				w=0
 		else:
-			print w
 			w=float(w)
 		return w
 	@property
@@ -222,32 +225,35 @@ class Layer(XmlBackedObject,Bounds):
 		child=None
 		if xml==self.xml or xml.__class__.__name__ in ['_Comment']:
 			pass
-		elif xml.tag=='variable':
-			# this belongs to a form, not an image
+		elif xml.tag in ['variable','form']:
+			# form elements do not belong to an image
 			pass
 		elif xml.tag=='text':
-			import textLayer
-			child=textLayer.TextLayer(doc,parent,xml)
+			import text
+			child=text.TextLayer(doc,parent,xml)
 		elif xml.tag=='link':
 			import linkLayer
 			child=linkLayer.Link(doc,parent,xml)
 		elif xml.tag=='image':
-			import imageLayer
-			child=imageLayer.ImageLayer(doc,parent,xml)
+			import image
+			child=image.ImageLayer(doc,parent,xml)
 		elif xml.tag=='group':
 			child=Layer(doc,parent,xml)
 		elif xml.tag=='modifier':
 			import modifier
 			child=modifier.Modifier(doc,parent,xml)
 		elif xml.tag=='solid':
-			import solidLayer
-			child=solidLayer.Solid(doc,parent,xml)
+			import solid
+			child=solid.Solid(doc,parent,xml)
 		elif xml.tag=='texture':
-			import textureLayer
-			child=textureLayer.Texture(doc,parent,xml)
+			import texture
+			child=texture.Texture(doc,parent,xml)
 		elif xml.tag=='pattern':
-			import patternLayer
-			child=patternLayer.Pattern(doc,parent,xml)
+			import pattern
+			child=pattern.Pattern(doc,parent,xml)
+		elif xml.tag=='ext':
+			import extension
+			child=extension.Extension(doc,parent,xml)
 		else:
 			raise Exception('ERR: unknown element, "'+xml.tag+'"')
 		return child
@@ -272,7 +278,7 @@ class Layer(XmlBackedObject,Bounds):
 		"region of interest" used for smart resizing and possibly other things
 		"""
 		#return Image.new('L',(int(self.w),int(self.h)),0)
-		ref=self._getProperty('roi',allowLinks=False)
+		ref=self._getProperty('roi')
 		return self.docRoot.imageByRef(ref)
 
 	@property
@@ -290,7 +296,7 @@ class Layer(XmlBackedObject,Bounds):
 
 		NOTE: the mask can either be a link to another file,
 		"""
-		ref=self._getProperty('mask',allowLinks=False)
+		ref=self._getProperty('mask')
 		img=self.docRoot.imageByRef(ref)
 		if img!=None:
 			if img.mode in ['RGBA','LA']:

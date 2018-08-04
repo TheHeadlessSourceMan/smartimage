@@ -1,10 +1,10 @@
 #!/usr/bin/env
 # -*- coding: utf-8 -*-
 """
-	A layer that contains an image
+A layer that contains an image
 """
 from layer import *
-import autoInterest
+from imgTools import *
 
 
 class ImageLayer(Layer):
@@ -22,18 +22,18 @@ class ImageLayer(Layer):
 
 		if there is none, figure it out
 		"""
-		ref=self._getProperty('roi',allowLinks=False)
+		ref=self._getProperty('roi')
 		if ref!=None:
 			img=self.docRoot.imageByRef(ref)
 		else:
-			img=autoInterest.interest(self.image)
+			img=interest(self.image)
 		if img.size!=self.image.size:
 			img.resize(self.image.size)
 		return img
 
 	@property
 	def image(self):
-		ref=self._getProperty('file',allowLinks=False)
+		ref=self._getProperty('file')
 		img=self.docRoot.imageByRef(ref)
 		w=self._getProperty('w','auto')
 		h=self._getProperty('h','auto')

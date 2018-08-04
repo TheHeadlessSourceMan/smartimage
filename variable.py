@@ -3,8 +3,8 @@ from xmlBackedObject import *
 
 
 class Variable(XmlBackedObject):
-	def __init__(self,docRoot,xml):
-		XmlBackedObject.__init__(self,docRoot,xml)
+	def __init__(self,docRoot,parent,xml):
+		XmlBackedObject.__init__(self,docRoot,parent,xml)
 		self._value=None
 		
 	@property
@@ -19,6 +19,9 @@ class Variable(XmlBackedObject):
 	def uitype(self):
 		# an html input type like (checkbox color date datetime datetime-local email file hidden image month number password radio range search tel text time url week )
 		return self._getProperty('type','text')
+	@property
+	def type(self):
+		return self.uitype
 	
 	@property
 	def default(self):

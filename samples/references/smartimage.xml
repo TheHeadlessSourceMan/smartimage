@@ -1,0 +1,13 @@
+<smartimage>
+	<form name="x">
+		<variable type="hidden" name="text1">BAD text 1</variable>
+		<variable type="hidden" id="text1">text 1</variable>
+		<variable type="hidden" id="text2">text 2</variable>
+	</form>
+	<text y="0" w="200" name="Test Layer 1">@text1</text>
+	<text y="25" w="200" name="Test Layer 2">@text2</text>
+	<text y="50" w="200" name="Test Layer 3">@otherstuff.text3</text>
+	<text y="75" w="200" name="Test Layer 4">@otherstuff.xml.text4</text>
+	<text y="100" w="200" name="Test Layer 5">@text5</text>
+	<solid w="200" h="200" color="#ffffff" />
+</smartimage>

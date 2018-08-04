@@ -70,6 +70,6 @@ if __name__ == '__main__':
 				print 'ERR: unknown argument "'+arg+'"'
 	if printhelp:
 		print 'Usage:'
-		print '  solidLayer.py [options]'
+		print '  solid.py [options]'
 		print 'Options:'
 		print '   NONE'

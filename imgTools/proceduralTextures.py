@@ -14,7 +14,7 @@ from PIL import Image,ImageDraw
 import numpy as np
 from math import *
 import math
-from colorCorrect import *
+from colorAdjust import *
 from selectionsAndPaths import *
 
 
@@ -122,39 +122,6 @@ def perlinNoise(w,h,octaves=None):
 #ret=scipy.ndimage.generic_filter(ret,f,size=None,footprint=(1),output=None,mode='reflect',cval=0.0, origin=0, extra_arguments=(), extra_keywords=None)
 	
 	
-
-	
-def cartesian2PolarX(img,order=1):
-	"""
-	Transform img to its polar coordinate representation.
-
-	order: int, default 1
-		Specify the spline interpolation order. 
-		High orders may be slow for large images.
-	"""
-	# max_radius is the length of the diagonal 
-	# from a corner to the mid-point of img.
-	max_radius = 0.5*np.linalg.norm( img.shape )
-
-	def transform(coords):
-		# Put coord[1] in the interval, [-pi, pi]
-		theta = 2*np.pi*coords[1] / (img.shape[1] - 1.)
-
-		# Then map it to the interval [0, max_radius].
-		#radius = float(img.shape[0]-coords[0]) / img.shape[0] * max_radius
-		radius = max_radius * coords[0] / img.shape[0]
-
-		i = 0.5*img.shape[0] - radius*np.sin(theta)
-		j = radius*np.cos(theta) + 0.5*img.shape[1]
-		return i,j
-
-	polar = scipy.ndimage.interpolation.geometric_transform(img, transform, order=order)
-
-	rads = max_radius * np.linspace(0,1,img.shape[0])
-	angs = np.linspace(0, 2*np.pi, img.shape[1])
-
-	return polar, (rads, angs)
-	
 def waveImage(w,h,repeats=2,angle=0,wave='sine',radial=False):
 	ret=np.zeros((h,w))
 	if radial:
@@ -241,78 +208,6 @@ def filmGrain(img,amount=None,iso=None):
 	"""
 	pass
 	
-def colormap(img,colors=None):
-	"""
-	apply the colors to a grayscale image
-	if a color image is provided, convert it (thus, acts like a "colorize" function)
-	
-	:param img:  a grayscale image
-	:param colors:  [(decimalPercent,color),(...)] 
-		if no colors are given, then [(0.0,black),(1.0,white)]
-		if a single color and no percent is given, assume [(0.0,black),(0.5,theColor),(1.0,white)]
-	
-	:return: the resulting image
-	"""
-	img=grayscale(img)
-	if not isFloat(img):
-		img=img/255.0
-	if type(colors)==type(None):
-		colors=[(0.0,(0.0,0.0,0.0)),(1.0,(1.0,1.0,1.0))]
-	elif type(colors[0]) not in [tuple,list,np.ndarray]:
-		white=[]
-		black=[]
-		if type(colors) in [str,unicode]:
-			colors=strToColor(colors)
-		if isFloat(colors):
-			imax=1.0
-			imin=0.0
-		else:
-			imax=255
-			imin=0
-		for i in range(len(colors)):
-			white.append(imax)
-			black.append(imin)
-		if len(colors) in [2,4]: # keep same alpha value
-			black[-1]=colors[-1]
-			white[-1]=white[-1]
-		colors=[(0.0,black),(0.5,colors),(1.0,white)]
-	else:
-		colors.sort() # make sure we go from low to high
-	# make sure colors are in the shape we need
-	colors=[[matchColorToImage(color[0],img),np.array(strToColor(color[1]))] for color in colors]
-	shape=(img.shape[0],img.shape[1],len(color[1]))
-	img2=np.ndarray(shape)
-	img=img[...,None]
-	if True:
-		lastColor=None
-		for color in colors:
-			if lastColor==None:
-				img2+=color[1]
-			else:
-				percent=(img-lastColor[0])*lastColor[0]/color[0]
-				img2=np.where(np.logical_and(img>lastColor[0],img<=color[0]),(color[1]*percent)+(lastColor[1]*(1-percent)),img2)
-			lastColor=color
-		img2=np.where(img>lastColor[0],lastColor[1],img2)
-	else:
-		def gradMap(c):
-			lastColor=None
-			for color in colors:
-				if c<color[0]:
-					if lastColor==None:
-						return color[1]
-					else:
-						percent=(c-lastColor[0])/color[0]
-						return (lastColor[1]*percent+color[1])/(2*percent)
-				lastColor=color
-			return lastColor[1]
-		img2=perPixel(gradMap,img,clamp=False)
-	return img2
-	
-
-GRADIENT_BLACK_TO_WHITE=[(0.0,(0.0,0.0,0.0)),(1.0,(1.0,1.0,1.0))]
-GRADIENT_CLEAR_TO_WHITE=[(0.0,(1.0,1.0,1.0,0.0)),(1.0,(1.0,1.0,1.0,1.0))]
-GRADIENT_CLEAR_TO_BLACK=[(0.0,(0.0,0.0,0.0,0.0)),(1.0,(0.0,0.0,0.0,1.0))]
-GRADIENT_RAINBOW=[(0.0,(1.0,0.0,0.0)),(0.2,(1.0,0.75,0.0)),(0.4,(1.0,1.0,0.0)),(0.6,(0.0,1.0,0.0)),(0.8,(0.0,0.0,1.0)),(1.0,(0.8,0.0,1.0))]
 	
 def deltaC(size,center=None,magnitude=False):
 	"""
@@ -341,16 +236,7 @@ def deltaC(size,center=None,magnitude=False):
 				img[x,y]=(x-center[0]),(y-center[1])
 	return img
 	
-def normalize(img):
-	"""
-	squash the image to fit in range 0.0 to 1.0
-	"""
-	img=img-img.min()
-	imax=img.max()
-	if imax!=0:
-		img=img/imax
-	return img
-	
+
 def clock(size=(256,256),angle=0,sharpEdge=False):
 	"""
 	:param sharpEdge: if true, 100% black ends at 100% white for a difinitive angle -- otherwise gives more of a lighting effect
@@ -363,85 +249,10 @@ def clock(size=(256,256),angle=0,sharpEdge=False):
 	if not sharpEdge:
 		img=deltaFromGray(img)
 	return img
-		
-def deltaFromGray(img):
-	"""
-	returns an image differenced from gray
-	"""
-	return normalize(abs(img-0.5))
 	
 def distance(src):
 	return scipy.ndimage.morphology.distance_transform_edt(src)
-
-def valueRotate(img,amount=0.5):
-	return np.mod(np.clip(img,0.0,1.0)+amount,1.0)
 	
-def flip90(src):
-	return np.transpose(src)
-	
-def preview(img):
-	"""
-	this is a utility to do image previews
-	
-	It was created because stinking photoshop always took over the pil Image.show()
-	
-	TODO: this belongs in a different file
-	"""
-	mode='pilShow'
-	#mode='save'
-	#mode='windowsPhotoViewer'
-	# ------
-	img=pilImage(img)
-	if mode=='pilShow':
-		pilImage(img).show()
-	elif mode=='save':
-		path=os.path.abspath('tmp.png')
-		img.save(path)
-	elif mode=='windowsPhotoViewer':
-		if False:
-			for dllPath in [r'%ProgramFiles%\Windows Photo Viewer',r'%ProgramFiles%\Windows Photo Gallery']:
-				if os.path.exists(dllPath):
-					break			
-			# %SystemRoot%\System32\rundll32.exe "%ProgramFiles%\Windows Photo Gallery\PhotoViewer.dll", ImageView_Fullscreen %1
-			dllPath=r'C:\Program Files\Windows Photo Gallery'
-			cmd=r'%SystemRoot%\System32\rundll32.exe "'+dllPath+r'\PhotoViewer.dll", ImageView_Fullscreen "'+path+'"'
-			print cmd
-			po=subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-			out,err=po.communicate()
-			print out,err
-		else:
-			cmd=r'"C:\Program Files\Windows Photo Gallery\WindowsPhotoGallery.exe" "'+path+'"'
-			print cmd
-			po=subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-			out,err=po.communicate()
-			print out,err
-		time.sleep(2.5)
-		os.remove(path)
-	
-def highlights(img,threshold=0.9):
-	"""
-	return a mask of all highlights
-	"""
-	return np.where(img<threshold,0,img)
-	
-def shadows(img,threshold=0.1):
-	"""
-	return a mask of all shadows
-	"""
-	return np.where(img>threshold,0,1-img)
-	
-def streak(img,size=15):
-	return img+directionalBlur(highlights(img,.95),size)
-	
-def directionalBlur(img,size=15):
-	oSize=img.shape
-	kernel= np.zeros((size,size))
-	kernel[int((size-1)/2), :] = np.ones(size)
-	kernel= kernel / size
-	img=scipy.signal.convolve(img,kernel)
-	d=(img.shape[0]-oSize[0])/2,(img.shape[1]-oSize[1])/2
-	img=img[d[0]:-d[0],d[1]:-d[1]]
-	return img
 	
 def xypoints(img):
 	"""
@@ -722,13 +533,6 @@ def line(img,(x,y),(x2,y2),thick=1,color=1):
 
 	return img
 	
-def dilate(img,size=3):
-	"""
-	implement image dilation
-	
-	TODO: does not belong in this file!
-	"""
-	return scipy.ndimage.grey_dilation(img,size=(size,size))
 	
 def arbitraryWave(wave,fromT,toT,mirror=False):
 	"""
@@ -736,22 +540,6 @@ def arbitraryWave(wave,fromT,toT,mirror=False):
 	
 	see also:
 		https://docs.scipy.org/doc/scipy/reference/interpolate.html
-	"""
-	pass
-	
-def circularBlur(img):
-	"""
-	blur in a radial manner
-	
-	http://chemaguerra.com/circular-radial-blur/
-	"""
-	pass
-	
-def zoomBlur(img):
-	"""
-	blur in a zoom manner
-	
-	http://chemaguerra.com/circular-radial-blur/
 	"""
 	pass
 	

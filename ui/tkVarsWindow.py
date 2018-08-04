@@ -326,6 +326,7 @@ class TkVariablesWindow(Frame):
 					self.tooltips.append(ToolTip(label,v.description))
 			else:
 				print 'ERR: Unknown or inconclusive variable type -',v.uitype
+				raise Exception()
 			if control!=None:
 				if row==0:
 					control.focus_set()

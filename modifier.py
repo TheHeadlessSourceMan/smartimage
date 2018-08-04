@@ -4,79 +4,9 @@
 This is a modifier layer such as blur, sharpen, posterize, etc
 """
 from layer import *
-from blendModes import *
+from imgTools import *
 from PIL import ImageFilter, ImageOps, ImageEnhance
 import numpy as np
-
-
-CONVOLVE_MATTRICES={
-	'emboss':[[-2,-1, 0],
-	          [-1, 1, 1],
-	          [ 0, 1, 2]],
-	'edgeDetect':[[ 0, 1, 0],
-	              [ 1,-4, 1],
-	              [ 0, 1, 0]],
-	'edgeEnhance':[[ 0, 0, 0],
-	               [-1, 1, 0],
-	               [ 0, 0, 0]],
-	'blur':[[ 0, 0, 0, 0, 0],
-	        [ 0, 1, 1, 1, 0],
-	        [ 0, 1, 1, 1, 0],
-	        [ 0, 1, 1, 1, 0],
-	        [ 0, 0, 0, 0, 0]],
-	'sharpen':[[ 0, 0, 0, 0, 0],
-	           [ 0, 0,-1, 0, 0],
-	           [ 0,-1, 5,-1, 0],
-	           [ 0, 0,-1, 0, 0],
-	           [ 0, 0, 0, 0, 0]],
-}
-	
-	
-def convolve(img,matrix,add,divide,edge):
-	size=len(matrix)
-	border=size/2-1
-	img=imageBorder(img,border,edge)
-	k=ImageFilter.Kernel((size,size),matrix,scale=divide,offset=add)
-	img=img.filter(k)
-
-
-def distort(img,points,r=1):
-	"""
-	morph an image to fit the given points
-	"""
-	data=((f[0],f[1]) for f,t in points)
-	img.transform(size,Image.MESH,data)
-	
-	
-def rolling_window(a, shape):  # rolling window for 2D array
-    s = (a.shape[0] - shape[0] + 1,) + (a.shape[1] - shape[1] + 1,) + shape
-    strides = a.strides + a.strides
-    return np.lib.stride_tricks.as_strided(a, shape=s, strides=strides)
-	
-	
-def applyFunctionToPatch(fn,a,patchSize=(3,3)):
-	# get all patchSize mattrices possible by sliding a patchSize window across the array
-	w=rolling_window(a,patchSize)
-	v=np.vectorize(fn,signature='(m,n)->(k,l)')
-	if False:
-		marginX=(patchSize[0]-1)/2
-		marginY=(patchSize[1]-1)/2
-		a2=np.array([])
-		for x in range(marginX,a.shape[0]-marginX):
-			for y in range(marginY,a.shape[1]-marginY):
-				v(a[x-marginX:x+marginX+1,y-marginY:y+marginY+1])
-	w.flags.writeable=True
-	r=v(w)
-	return r
-	
-def erode(img):
-	a=np.asarray(img)
-	def _erode(p):
-		print p
-		p[1,1]=1
-		return p
-	applyFunctionToPatch(_erode,a,(3,3))
-	return Image.fromarray(a.astype('uint8'),img.mode)
 
 
 class Modifier(Layer):

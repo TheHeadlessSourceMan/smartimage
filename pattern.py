@@ -4,7 +4,7 @@
 This is a layer for creating repeating patterns
 """
 from layer import *
-from proceduralTextures import *
+from imgTools import *
 
 
 class Pattern(Layer):
@@ -75,6 +75,6 @@ if __name__ == '__main__':
 				print 'ERR: unknown argument "'+arg+'"'
 	if printhelp:
 		print 'Usage:'
-		print '  patternLayer.py [options]'
+		print '  pattern.py [options]'
 		print 'Options:'
 		print '   NONE'

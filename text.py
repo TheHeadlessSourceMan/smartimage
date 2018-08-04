@@ -10,6 +10,10 @@ import textwrap
 from PIL import ImageFont, ImageDraw
 import urllib,urllib2
 
+# TODO: select based on OS
+DEFAULT_FONT=r'c:\windows\fonts\arial.ttf'
+#DEFAULT_FONT='Helvetica'
+#DEFAULT_FONT='sans-serif'
 
 def fontSquirrelGet(fontName,cachedir):
 	fontName=fontName.replace(' ','-')
@@ -89,8 +93,9 @@ def googleFontsGet(fontName,cachedir):
 def downloadFont(fontName):
 	cachedir=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep+'font_cache'+os.sep
 	font=googleFontsGet(fontName,cachedir)
-	if font==None:
-		font=fontSquirrelGet(fontName,cachedir)
+	# TODO: fontsquirrel not implemented
+	#if font==None:
+	#	font=fontSquirrelGet(fontName,cachedir)
 	return font
 
 class TextLayer(Layer):
@@ -107,7 +112,7 @@ class TextLayer(Layer):
 		return self._getProperty('font',None)
 	@property
 	def fontSize(self):
-		return int(self._getProperty('fontSize',10))
+		return int(self._getProperty('fontSize',24))
 	@property
 	def typeFace(self):
 		return int(self._getProperty('typeFace',0))
@@ -161,11 +166,15 @@ class TextLayer(Layer):
 
 		returns PIL font object
 		"""
+		if self.fontName!=None:
+			fontName=self.fontName
+		else:
+			fontName=DEFAULT_FONT
 		if self._font==None:
 			# first look in the zipped file
 			for name in self.docRoot.componentNames:
 				name=name.rsplit('.',1)
-				if name[0]==self.fontName:
+				if name[0]==fontName:
 					if len(name)==1 or name[1] in ['ttf','otf','otc','ttc']:
 						name='.'.join(name)
 						self._font=ImageFont.truetype(self.docRoot.getComponent(name),self.fontSize,self.typeFace)
@@ -173,11 +182,15 @@ class TextLayer(Layer):
 		if self._font==None:
 			# try the os
 			try:
-				self._font=ImageFont.truetype(self.fontName,self.fontSize,self.typeFace)
+				self._font=ImageFont.truetype(fontName,self.fontSize,self.typeFace)
 			except IOError:
 				self._font=None
 		if self._font==None:
-			self._font=ImageFont.truetype(downloadFont(self.fontName),self.fontSize,self.typeFace)
+			fontdata=downloadFont(fontName)
+			if fontdata!=None:
+				self._font=ImageFont.truetype(fontdata,self.fontSize,self.typeFace)
+		if self._font==None:
+			raise Exception('Cannot find font anywhere: "'+fontName+'"')
 		return self._font
 
 	@property
@@ -190,9 +203,13 @@ class TextLayer(Layer):
 	@property
 	def image(self):
 		text=self.text
+		# create a fake image, ImageDraw to use for size calculation
 		img=Image.new('L',(1,1))
 		d=ImageDraw.Draw(img)
 		# some sanity checking
+		if len(text)<1:
+			print 'WARN: Layer "'+self.name+'" has no text specified'
+			return None
 		if self.w==0:
 			size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
 			w,h=size
@@ -200,7 +217,8 @@ class TextLayer(Layer):
 			# determine the text wrapping and final size
 			w=self.w
 			textWrapper=textwrap.TextWrapper()
-			textWrapper.width=int(w/len(text)*d.textsize('l',font=self.font,spacing=self.lineSpacing)[0])
+			charSize=d.textsize('l',font=self.font,spacing=self.lineSpacing)[0]
+			textWrapper.width=int(w/len(text)*charSize)
 			size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
 			while size[0]>w and textWrapper.width>0:
 				textWrapper.width-=1
@@ -261,6 +279,6 @@ if __name__ == '__main__':
 				print 'ERR: unknown argument "'+arg+'"'
 	if printhelp:
 		print 'Usage:'
-		print '  textLayer.py [options]'
+		print '  text.py [options]'
 		print 'Options:'
 		print '   NONE'

@@ -18,71 +18,86 @@ class XmlBackedObject(object):
 		self._id=None
 		self._variableManager=None
 		self.dirty=False
-
-	def _dereference(self,name,value,default=None,allowReplacements=True,allowLinks=True,nofollow=[]):
+		
+	def _fixValueResults(self,value,xob,nameHint):
 		"""
-		name - the attribute in the original object that we got value from (or '_' = text contents)
+		Whenever a value is read from the file, we'll run it through this function
+		before returning.  This way special magic values can be implemented.
+		
+		Probably best to avoid using this if at all possible.
 		"""
-		while type(value) in [str,unicode] and len(value)>0 and value[0]=='@':
-			# loop detection
-			if value in nofollow:
-				nofollow.append(value)
-				raise Exception('ERR: Loop detected "'+('->'.join(nofollow))+'"')
-			nofollow.append(value)
-			# determine what to link to
-			idFind=value[1:].split('.',1)
-			idFind.append(name)
-			value=None
-			if allowLinks and value==None:
-				xob=self.docRoot.getLayer(idFind[0])
-				if xob!=None:
-					name=idFind[1]
-					if name=='_':
-						value=self.xml.text
-					else:
-						value=default
-						if name in xob.xml.attrib:
-							value=xob.xml.attrib[name]
-					# width and height can be auto
-					if name in ['w','h'] and value in ('0','auto',None):
-						value=getattr(xob,name)
-			if value==None and self._variableManager!=None:
-				value=self._variableManager.getVariableValue(idFind[0])
-			if allowReplacements and idFind[0] in self.docRoot.variables:
-				value=self.docRoot.variables[idFind[0]].value
-			if allowLinks and value==None:
-				xob=self.docRoot.getLayerByName(idFind[0])
-				if xob!=None:
-					name=idFind[1]
-					if name=='_':
-						value=self.xml.text
-					else:
-						value=default
-						if name in xob.xml.attrib:
-							value=xob.xml.attrib[name]
-					# width and height can be auto
-					if name in ['w','h'] and value in ('0','auto',None):
-						value=getattr(xob,name)
-					
+		if xob!=None: # TODO: do I want to do this?
+			# width and height can be auto
+			if nameHint in ['w','h'] and value in ('0','auto',None):
+				value=getattr(xob,nameHint)
 		return value
 
-	def _getProperty(self,name,default=None,allowReplacements=True,allowLinks=True):
+	def _dereference(self,name,nameHint='',default=None,nofollow=[]):
+		"""
+		:param nameHint: the attribute in the original object that we got name from (or '_' = text contents)
+		:param name: the name to dereference
+		"""
+		newVal=name
+		xob=None
+		while type(name) in [str,unicode] and len(name)>0 and name[0]=='@':
+			# loop detection
+			valueLocation=self.docRoot.xmlName+':'+name
+			if valueLocation in nofollow:
+				nofollow.append(name)
+				raise Exception('ERR: Loop detected "'+('->'.join(nofollow))+'"')
+			nofollow.append(valueLocation)
+			# --- search by Id
+			idFind=name[1:].split('.',1)
+			idFind.append(nameHint)
+			newVal=None
+			if newVal==None:
+				xob=self.docRoot.getLayer(idFind[0])
+				if xob!=None:
+					nameHint=idFind[1]
+					if nameHint=='_':
+						newVal=self.xml.text
+					else:
+						newVal=default
+						if nameHint in xob.xml.attrib:
+							newVal=xob.xml.attrib[nameHint]
+			# --- search in context
+			if newVal==None:
+				if newVal==None and self._variableManager!=None:
+					newVal=self._variableManager.getVariableValue(idFind[0])
+				if idFind[0] in self.docRoot.variables:
+					newVal=self.docRoot.variables[idFind[0]].value
+			# --- search by filename
+			if newVal==None:
+				newVal=self.docRoot.getItemByFilename(name,nofollow)
+			# --- search by nameHint
+			if newVal==None:
+				xob=self.docRoot.getLayerByName(idFind[0])
+				if xob!=None:
+					nameHint=idFind[1]
+					if nameHint=='_':
+						newVal=xob.text
+					else:
+						newVal=default
+						if nameHint in xob.xml.attrib:
+							newVal=xob.xml.attrib[nameHint]
+			name=newVal
+		return self._fixValueResults(newVal,xob,nameHint)
+
+	def _getProperty(self,name,default=None):
 		"""
 		name - retrieve this property from the xml attributes
 		default - if there is no attribute, return this instead (can be a link or replacement)
 		Optional:
-			allowLinks - replace a "@id", "@id._", or "@id.attr" value with the same value from the layer with that id
-			allowReplacements - replace a "@label" value with the current value of a variable
 			You can also have a replacement value that is a link, or a link that points to a replacement value.
 		"""
 		value=default
 		if name in self.xml.attrib:
 			value=self.xml.attrib[name]
-		value=self._dereference(name,value,default,allowReplacements,allowLinks,['@'+self.id+'.'+name])
+		value=self._dereference(value,name,default,['@'+self.id+'.'+name])
 		return value
 
-	def _getPropertyArray(self,name,default=None,allowReplacements=True,allowLinks=True):
-		val=self._getProperty(name,default,allowReplacements,allowLinks)
+	def _getPropertyArray(self,name,default=None):
+		val=self._getProperty(name,default)
 		if val==None:
 			return val
 		val=val.strip()
@@ -90,23 +105,21 @@ class XmlBackedObject(object):
 			val=val[1:-1]
 		return [float(v) for v in val.split(',')]
 		
-	def _getPropertyPercent(self,name,default=1.0,allowReplacements=True,allowLinks=True):
+	def _getPropertyPercent(self,name,default=1.0):
 		"""
 		gets a property, always returning a decimal percent (where 1.0 = 100%)
 
 		name - retrieve this property from the xml attributes
 		default - if there is no attribute, return this instead (can be a link or replacement)
 		Optional:
-			allowLinks - replace a "@id", "@id._", or "@id.attr" value with the same value from the layer with that id
-			allowReplacements - replace a "@label" value with the current value of a variable
 			You can also have a replacement value that is a link, or a link that points to a replacement value.
 		"""
-		value=self._getProperty(name,default,allowReplacements,allowLinks)
+		value=self._getProperty(name,default)
 		if type(value) in [str,unicode]:
+			value=value.strip()
 			if len(value)<1:
 				value=default
 			else:
-				value=value.strip()
 				if value[-1]=='%':
 					value=float(value[0:-1])/100.0
 				else:
@@ -136,15 +149,7 @@ class XmlBackedObject(object):
 
 	@property
 	def text(self):
-		return self._getText()
-	def _getText(self,allowReplacements=True,allowLinks=True):
-		"""
-		Optional:
-			allowLinks - replace a "@id", "@id._", or "@id.attr" value with the same value from the layer with that id
-			allowReplacements - replace a "@label" value with the current value of a variable
-			You can also have a replacement value that is a link, or a link that points to a replacement value.
-		"""
-		return self._dereference('_',self.xml.text,'',allowReplacements,allowLinks,['#'+self.id+'._'])
+		return self._dereference(self.xml.text,'_','',['#'+self.id+'._'])
 
 
 if __name__ == '__main__':

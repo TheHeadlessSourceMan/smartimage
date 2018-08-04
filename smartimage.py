@@ -20,14 +20,22 @@ class SmartImage(Layer):
 	The object acts as an array of pages/frames (array of 1 if it's just a simple image)
 	"""
 
-	def __init__(self,filename):
+	def __init__(self,filename,xmlName='smartimage.xml',topSmartimage=None):
 		Layer.__init__(self,self,None,None)
 		self._hasRunUi=False
 		self._nextId=None
 		self._variables=None
 		self._varAuto=[]
+		if topSmartimage==None:
+			# we are the top, so we'll take care of the peer list
+			# (otherwise, we'll access self._topSmartimage._peerSmartimages)
+			self._peerSmartimages={}
+		if topSmartimage==None:
+			self._topSmartimage=self
+		else:
+			self._topSmartimage=topSmartimage
 		self.autoUi=True
-		self.load(filename)
+		self.load(filename,xmlName)
 		self.cacheRenderedLayers=True # trade memory for speed
 
 	@property
@@ -35,7 +43,7 @@ class SmartImage(Layer):
 		if self._variables==None:
 			self._variables=OrderedDict()
 			for variable in self.xml.xpath('//*/variable'):
-				variable=Variable(self,variable)
+				variable=Variable(self,self,variable)
 				self._variables[variable.name]=variable
 		return self._variables
 		
@@ -110,6 +118,54 @@ class SmartImage(Layer):
 				self._zipfile=zipfile.ZipFile(self.filename)
 			f=self._zipfile.open(name)
 		return f
+		
+	def getPeerSmartimage(self,xmlName):
+		"""
+		get another smartimage .xml embedded in this file
+		"""
+		while xmlName[0]=='@':
+			xmlName=xmlName[1:]
+		xmlName=xmlName.split('.')[0]+'.xml'
+		peerSmartimages=self._topSmartimage._peerSmartimages
+		if xmlName not in peerSmartimages:
+			self._peerSmartimages[xmlName]=SmartImage(self.filename,xmlName,self._topSmartimage)
+		return peerSmartimages[xmlName]
+		
+	def getItemByFilename(self,name,nameHint='',nofollow=[]):
+		"""
+		get an item that resides in another smartimage
+		
+		:param name: should be something like:
+			@filename.xml.itemId
+			@filename.xml.name
+			@filename.itemId
+			@subfolder/filename.itemId
+		:param nameHint: used as a default when getting attributes 
+			such as <image file="@layerId"> means <image file="@layerId.result"> (wherein nameHint="result")
+		:param nofollow: used internally to prevent loops
+			
+		:return: the item object or None if not found
+		"""
+		item=None
+		while name[0]=='@':
+			name=name[1:]
+		name=name.split('.')
+		if len(name)>1 and name[1]=='xml': # they included the file extension
+			filename=name[0]
+			if name>2:
+				name='.'.join(name[2:])
+			else:
+				name=''
+		else: # they did not include the file extension
+			filename=name[0]
+			if name>1:
+				name='.'.join(name[1:])
+			else:
+				name=''
+		sImg=self.getPeerSmartimage(filename)
+		if sImg!=None:
+			item=sImg._dereference(name,nameHint,nofollow=nofollow)
+		return item
 
 	def getNextId(self,rescan=False):
 		"""
@@ -123,9 +179,12 @@ class SmartImage(Layer):
 				if first:
 					first=False
 				else:
-					id=int(id.split('"',1)[0])
-					if id>maxid:
-						maxid=id
+					try:
+						id=int(id.split('"',1)[0])
+						if id>maxid:
+							maxid=id
+					except ValueError: # if the id is not an integer
+						pass
 			self._nextId=maxid+1
 		id=self._nextId
 		self._nextId+=1
@@ -175,13 +234,14 @@ class SmartImage(Layer):
 		draw=ImageDraw.Draw(image)
 		draw.multiline_text(xy,text,None,self.currentFont,anchor=None,spacing=self.lineSpacing,align=self.textAlignment)
 
-	def load(self,filename):
+	def load(self,filename,xmlName='smartimage.xml'):
 		self._xml=None
 		self._zipfile=None
 		self.currentFont=None
 		self.lineSpacing=0
 		self.textAlignment='left'
 		self.filename=filename
+		self.xmlName=xmlName
 
 	def save(self,filename=None):
 		self.varUi(force=False)
@@ -234,7 +294,7 @@ class SmartImage(Layer):
 		if there are variables that can be edited
 		"""
 		ret=False
-		for variable in self.variables:
+		for variable in self.variables.values():
 			if variable.type!='hidden':
 				ret=True
 				break
@@ -322,13 +382,17 @@ if __name__ == '__main__':
 	if len(sys.argv)<2:
 		printhelp=True
 	else:
+		didSomething=False
+		didOutput=False
 		simg=None
 		for arg in sys.argv[1:]:
 			if arg.startswith('-'):
 				arg=[a.strip() for a in arg.split('=',1)]
 				if arg[0] in ['-h','--help']:
 					printhelp=True
+					didSomething=True
 				elif arg[0]=='--smartsize':
+					didSomething=True
 					arg[1]=arg[1].split('=',1)
 					size=[float(x.strip()) for x in arg[1][0].split(',')]
 					img=simg.smartsize(size)
@@ -336,7 +400,9 @@ if __name__ == '__main__':
 						img.save(arg[1][1])
 					else:
 						img.show()
-				elif arg[0]=='--image':
+				elif arg[0] in ['--image','--show']:
+					didSomething=True
+					didOutput=True
 					if len(arg)>1:
 						pages=len(simg)
 						if pages>1:
@@ -356,14 +422,20 @@ if __name__ == '__main__':
 						#while True:
 						time.sleep(1)
 				elif arg[0]=='--roi':
+					didSomething=True
+					didOutput=True
 					img=simg.roi
 					if len(arg)>1:
 						img.save(arg[1])
 					else:
 						img.show()
 				elif arg[0]=='--save':
+					didSomething=True
+					didOutput=True
 					simg.save(arg[1])
 				elif arg[0]=='--testfont':
+					didSomething=True
+					didOutput=True
 					print arg[1],
 					if True:#try:
 						simg.setFont(arg[1])
@@ -372,29 +444,43 @@ if __name__ == '__main__':
 						print False
 						print e
 				elif arg[0]=='--variables':
+					didSomething=True
+					didOutput=True
 					for variable in simg.variables.values():
 						print variable.name+'('+variable.uitype+') = '+variable.value+'\n\t'+variable.description
 				elif arg[0]=='--set':
+					didSomething=True
 					simg.setVariable(*arg[1].split('=',1))
 				elif arg[0]=='--varfile':
+					didSomething=True
 					vf=arg[1].split('=',1)
 					if len(vf)>1:
 						simg.varFile(vf[1],vf[0])
 					else:
 						simg.varFile(vf[1])
 				elif arg[0]=='--varui':
+					didSomething=True
 					simg.varUi()
 				elif arg[0]=='--noui':
 					simg.autoUi=False
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
+				didSomething=True
 				simg=SmartImage(arg)
+	if not didSomething:
+		print 'ERR: Command accomplished nothing!\n'
+		printhelp=True
+	elif simg!=None and didOutput==False:
+		print 'WARN: No output captured.  I\'m assuming you want to show the result, so here goes.'
+		img=simg[0].renderImage()
+		img.show()
 	if printhelp:
 		print 'Usage:'
 		print '  smartimage.py file.simg [options]'
 		print 'Options:'
 		print '   --smartsize=w,h[=filename] .... smartsize the image. if no filename, show in a window'
+		print '   --show ........................ same as --image (this is also the default if no output is selected)'
 		print '   --image[=filename] ............ get the base image. if no filename, show in a window'
 		print '                                   if multi-image or multi-frame, modify filename to be a numbered sequence'
 		print '   --roi[=filename] .............. get the region of interest image. if no filename, show in a window'
