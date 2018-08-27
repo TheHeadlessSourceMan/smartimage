@@ -85,5 +85,69 @@ A format and reference implementation for multilayer images that can be used as 
 	<li>dragdrop handler that uses auto-assign variables</li>
 	<li><a href="https://www.w3.org/Graphics/SVG/">SVG</a> loading</li>
 </div>
+
+
+primatives:
+	* layer
+	* image 0.0-1.0 grayscale (x3 for RGB, etc)
+		texture gen can be treated as image
+		any layer can be treated as image
+		mask and selection are each an image
+	* convolution
+	* morphology
+	* 1d waveform - like sin,tri,saw or user-defined(aka path)
+		used for color curves and texture gen
+	* shift between colorspace, frequency/value, derivative/integral, and polar/cartesian
+	* path - any defined shape (described in SVG notation)
+		best non-cairo svg parser around https://pypi.org/project/svgpathtools/
+plugins need
+		http://filters.sourceforge.net/
+	[x] channel access
+	logic
+	ability to create
+	stroke paths
+	[x] per-channel noise
+		https://stackoverflow.com/questions/42147776/producing-2d-perlin-noise-with-numpy
+		http://libnoise.sourceforge.net/index.html -- definietly be able to combine and do everything this does
+		https://github.com/Auburns/FastNoise
+	[x] variable randomness
+	[x] make selections??
+	[x] morphology - dilate/erode
+		http://www.scipy-lectures.org/advanced/image_processing/#mathematical-morphology
+		http://www.telecom.ulg.ac.be/research/libmorphoDoc/index.html
+		good description of math - https://www.researchgate.net/publication/312020813_NumPy_SciPy_Recipes_for_Image_Processing_Binary_Images_and_Morphological_Operations
+	warp/scatter / displace
+	[x] radial/linear gradients
+	[x] normal maps / heightmaps
+		http://www.juhanalankinen.com/calculating-normalmaps-with-python-and-numpy/
+		https://blenderartists.org/t/ripples-waves-normalmaps-and-textures-with-numpy-scipy-and-matplotlib/454787/8
+	convolution
+		http://www.ozone3d.net/tutorials/image_filtering_p3.php
+		http://homepages.inf.ed.ac.uk/rbf/HIPR2/glossary.htm
+	color quantization (needed for painterly effects)
+		https://docs.scipy.org/doc/scipy/reference/cluster.vq.html
+	posterization is useful for removing random noise, but fairly complex, but same as median filters
+		https://docs.scipy.org/doc/scipy-0.16.1/reference/generated/scipy.ndimage.filters.median_filter.html
+	color lookup table
+		https://stackoverflow.com/questions/14448763/is-there-a-convenient-way-to-apply-a-lookup-table-to-a-large-array-in-numpy#14451106
+	good and simple: https://www.tutorialspoint.com/dip/index.htm
+	math heavy: http://www.cs.dartmouth.edu/farid/downloads/tutorials/fip.pdf
+	better info on grayscale conversion:
+		https://www.kdnuggets.com/2018/07/basic-image-data-analysis-numpy-opencv-p1.html
+		
+	Proposed Extension for AI
+		TensorFlow (https://www.tensorflow.org/tutorials/)
+			applies trained model to the smartimage and uses the results
+			<tensorflow verb="evaluate" model="fileInSmartimage.db" />
+		DeepMind (https://deepmind.com/research/open-source/)
+			Which is tensorflow https://deepmind.com/blog/open-sourcing-sonnet/
+		Celebrety thing:
+			http://research.nvidia.com/publication/2017-10_Progressive-Growing-of
+			http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
+			https://github.com/tkarras/progressive_growing_of_gans
+			https://drive.google.com/open?id=15hvzxt_XxuokSmj0uO4xxMTMWVc0cIMU
+
+	
+
 </body>
 </html>

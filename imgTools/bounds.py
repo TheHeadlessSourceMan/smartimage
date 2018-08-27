@@ -111,6 +111,13 @@ class Bounds(object):
 	@size.setter
 	def size(self,size):
 		self.w,self.h=size
+		
+	@property
+	def offset(self):
+		return (self.x,self.y)
+	@offset.setter
+	def offset(self,offset):
+		self.x,self.y=offset
 
 	@property
 	def center(self):

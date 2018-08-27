@@ -159,11 +159,12 @@ def compareImage(img1,img2,tolerance=0.99999):
 	
 def preview(img):
 	"""
-	this is a utility to do image previews
+	This is a utility to do image previews.
+	Wherever you use PIL.Image.show(), use this instead
 	
 	It was created because stinking photoshop always took over the pil Image.show()
 	
-	TODO: this belongs in a different file
+	:param img: can be a PIL image, numpy array, or file location
 	"""
 	mode='pilShow'
 	#mode='save'
@@ -171,7 +172,9 @@ def preview(img):
 	# ------
 	img=pilImage(img)
 	if mode=='pilShow':
+		import time
 		pilImage(img).show()
+		time.sleep(3) # sometimes the file goes away before we can show it
 	elif mode=='save':
 		path=os.path.abspath('tmp.png')
 		img.save(path)

@@ -234,17 +234,39 @@ def getChannel(img,channel):
 	return ch
 
 	
-def grayscale(img):
+def grayscale(img,method='BT.709'):
 	"""
-	convert any image to grayscale
+	Convert any image to grayscale
 	
-	NOTE: and TODO:
-		There are many different ways to go about this. Which is the best?
+	:param method: available are:
+		"max" - max of all channels
+		"min" - min of all channels
+		"avg" - average of all channels
+		"HSV" or "median" - average of max and min
+		"ps-gimp" - weighted average used by most image applications
+		"BT.709" - [default] weighted average specified by ITU-R "luma" specification BT.709
+		"BT.601" - weighted average specified by ITU-R specification BT.601 used by video formats
+	
+	NOTE:
+		There are many different ways to go about this.
 		http://www.tannerhelland.com/3643/grayscale-image-algorithm-vb6/
 	"""
 	img=numpyArray(img)
 	if len(img.shape)>2:
-		img=img.max(-1)
+		if method=='max':
+			img=img.max(-1)
+		elif method=='min':
+			img=img.min(-1)
+		elif method=='avg':
+			img=img.sum(-1)/3.0
+		elif method=='ps-gimp':
+			img=(img[:,:,0]*0.3 + img[:,:,1]*0.59 + img[:,:,2]*0.11)
+		elif method=='BT.709':
+			img=(img[:,:,0]*0.2126 + img[:,:,1]*0.7152 + img[:,:,2]*0.0722)
+		elif method=='BT.601':
+			img=(img[:,:,0]*0.299 + img[:,:,1]*0.587 + img[:,:,2]*0.114)
+		elif method=='HSV' or method=='median':
+			img=(img.max(-1)+img.min(-1))/2.0
 	return img
 
 

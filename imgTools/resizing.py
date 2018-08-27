@@ -4,6 +4,7 @@
 Contains a litany of resizing/pasting/cropping routines
 """
 from imageRepr import *
+from bounds import *
 
 
 def imageBorder(img,thickness,edge="#ffffff00"):
@@ -197,15 +198,32 @@ def paste(image,overImage,position=(0,0),resize=True):
 	return overImage
 
 	
-def getSize(image):
+def getSize(ofThis):
 	"""
-	get the size of the image regardless of what kind it is
+	get the xy size of something regardless of what kind it is
+	
+	:param ofThis: can be any of
+		PIL image
+		numpy array
+		(w,h) or [w,h]
+		(x,y,w,h) or [x,y,w,h]
+		"w,h"
+		anything derived from Bounds
 	"""
-	if isinstance(image,Image.Image):
-		return image.width,image.height
-	return image.shape[1],image.shape[0]
+	if type(ofThis) in [str,unicode]:
+		return ofThis.split(',')[0:2]
+	if type(ofThis) in [tuple,list]:
+		if len(ofThis)==2:
+			return [ofThis[-2],ofThis[-1]]	
+	if type(ofThis)==np.ndarray:
+		return [ofThis.shape[0]-1,ofThis.shape[1]-1]
+	if isinstance(ofThis,Bounds):
+		return bounds.size
+	if isinstance(ofThis,Image.Image):
+		return [ofThis.width,ofThis.height]
+	return None
 
-def makeSamegetSize(img1,img2,edge=(0,0,0,0)):
+def makeSameSize(img1,img2,edge=(0,0,0,0)):
 	"""
 	pad the images with so they are the same size.  Commonly used for things like
 	resizing before blending
@@ -233,7 +251,7 @@ def crop(img,size):
 	"""
 	crop an image to a given size
 	
-	:param size: can be an image, a (w,h), or a (x,y,w,h)
+	:param size: can be anything that getSize() supports
 	
 	:returns: image of the cropped size (or smaller)
 		can return None if selection is of zero size

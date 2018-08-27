@@ -12,9 +12,7 @@ import os,subprocess,time
 from helper_routines import *
 from PIL import Image,ImageDraw
 import numpy as np
-from math import *
 import math
-from colorAdjust import *
 from selectionsAndPaths import *
 
 
@@ -151,7 +149,7 @@ def randomScatter(img,distance):
 	return img
 	
 def displaceImage(img,displacementMap,distance=10,angle=45):
-	#angle=angle/180*pi
+	angle=math.radians(angle)
 	img=numpyArray(img)
 	displacementMap=numpyArray(displacementMap)
 	if len(displacementMap.shape)>2:
@@ -159,7 +157,7 @@ def displaceImage(img,displacementMap,distance=10,angle=45):
 		displacementMap=displacementMap[:,:,1]
 	def dissp(point):
 		delta=displacementMap[point[0],point[1]]*distance
-		return (point[0]+delta*sin(angle),point[1]-delta*cos(angle))
+		return (point[0]+delta*math.sin(angle),point[1]-delta*math.cos(angle))
 	img=scipy.ndimage.geometric_transform(img,dissp,mode='nearest')
 	return img
 	
@@ -266,7 +264,7 @@ def xypoints(img):
 			xy[x,y]=[x,y]
 	return xy
 	
-def voronoi(size=(256,256),npoints=30,mode='twoNearestDiff',invert=False):
+def voronoi(size=(256,256),npoints=30,mode='squared',invert=False):
 	"""
 	
 	:param mode: 'simple','squared','twoNearestDiff','twoNearestMult'
@@ -280,7 +278,7 @@ def voronoi(size=(256,256),npoints=30,mode='twoNearestDiff',invert=False):
 	size=(int(size[0]),int(size[1]))
 	img=np.ndarray(size) 
 	size=np.array(size)
-	points=np.random.rand(npoints,2)*size # random points where voroni connections will appear
+	points=np.random.rand(int(npoints),2)*size # random points where voroni connections will appear
 	xy=xypoints(img).reshape((-1,2)) # flattened list of xy points for every pixel
 	dist=scipy.spatial.distance.cdist(xy,points) # for each pixel, determine distance to all voroni points
 	if mode=='simple':
@@ -534,6 +532,24 @@ def line(img,(x,y),(x2,y2),thick=1,color=1):
 	return img
 	
 	
+def grid(img=(256,256),nx=10,ny=10,thick=1,color=1):
+	if type(img)==tuple:
+		size=img
+		if type(color) in (float,int):
+			img=np.ndarray((size[0],size[1]))
+		else:
+			img=np.ndarray((size[0],size[1],len(color)))
+	else:
+		size=img.shape[0:1]
+	w=size[0]-1
+	h=size[1]-1
+	for x in range(0,w,w/nx):
+		img=line(img,(x,0),(x,h),thick,color)
+	for y in range(0,h,h/ny):
+		img=line(img,(0,y),(w,y),thick,color)
+	return img
+			
+	
 def arbitraryWave(wave,fromT,toT,mirror=False):
 	"""
 	evaluate arbitrary waveform between two points
@@ -545,22 +561,130 @@ def arbitraryWave(wave,fromT,toT,mirror=False):
 	
 	
 if __name__ == '__main__':
-	img=woodRings()
-	img=streak(img)
-	#img=flip90(img)
-	#img=x()
-	#img=dilate(img)
-	img=np.clip(img,0.0,1.0)
-	#img1=waveImage(500,500)
-	#img1=warpRotate(img1,-45)
-	#img1=warpCircle(img1)
-	#img2=numpyArray(perlinNoiseY(500,500))[:,:,1]
-	#img2=normalize(img2)
-	#img2=levels(img2,0.0,0.5,1.0,0.2,0.8)
-	#img=displaceImage(img1,img2,45,2)
-	#img=levels(img,0.0,0.25,0.5)
-	#img=img1
-	#img=img2
-	#img=colormap(img,GRADIENT_RAINBOW)
-	#img=colormap(img,"#ff0000")
-	preview(img)
+	import sys
+	from numberSpaces import *
+	# Use the Psyco python accelerator if available
+	# See:
+	# 	http://psyco.sourceforge.net
+	try:
+		import psyco
+		psyco.full() # accelerate this program
+	except ImportError:
+		pass
+	printhelp=False
+	if len(sys.argv)<2:
+		printhelp=True
+	else:
+		img=None
+		size=(256,256)
+		mode='average'
+		for arg in sys.argv[1:]:
+			img2=None
+			if arg.startswith('-'):
+				arg=[a.strip() for a in arg.split('=',1)]
+				if arg[0] in ['-h','--help']:
+					printhelp=True
+				elif arg[0]=='--marble':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=marble(*params)
+				elif arg[0]=='--clouds':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=perlin(*params)
+				elif arg[0]=='--voronoi':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=voronoi(*params)
+				elif arg[0]=='--woodRings':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=woodRings(*params)
+				elif arg[0]=='--x':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=x(*params)
+				elif arg[0]=='--grid':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=grid(*params)
+				elif arg[0]=='--wave':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=waveformTexture(*params)
+				elif arg[0]=='--clock':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=clock2(*params)
+				elif arg[0]=='--turbulence':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=turbulence(*params)
+				elif arg[0]=='--smooth':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=smoothNoise(*params)
+				elif arg[0]=='--random':
+					params=[size]
+					if len(arg)>1:
+						params.extend(arg[1].split(','))
+					img2=randomNoise(*params)
+				elif arg[0]=='--cartesian':
+					img=polar2cartesian(img)
+				elif arg[0]=='--polar':
+					img=cartesian2polar(img)
+				elif arg[0]=='--fft':
+					img=toFrequency(img)
+					size=(img.shape[0],img.shape[1])
+				elif arg[0]=='--ifft':
+					img=fromFrequency(img)
+					size=(img.shape[0],img.shape[1])
+				elif arg[0]=='--mode':
+					mode=arg[1]
+				elif arg[0]=='--show':
+					preview(img)
+				elif arg[0]=='--save':
+					pilImage(clampImage(img)).save(arg[1])
+				else:
+					print 'ERR: unknown argument "'+arg[0]+'"'
+			else:
+				img2=arg
+			if type(img2)!=type(None):
+				if type(img)==type(None):
+					img=img2
+				elif mode=='average':
+					img=combine(img,img2);
+				elif mode=='displace':
+					img=displaceImage(img,img2)
+	if printhelp:
+		print 'Usage:'
+		print '  proceduralTextures.py [option|image.jpg]'
+		print 'Options:'
+		print '   --show ................. show the image'
+		print '   --marble[=xPeriod,yPeriod,turbPower,turbSize] .. marble'
+		print '   --perlin ............... clouds'
+		print '   --voronoi[=npoints,mode,invert] .. cell texture'
+		print '   --woodRings[=xyPeriod,turbPower,turbSize] .. wood rings'
+		print '   --x .................... big x across the image'
+		print '   --grid[=nx,ny] ......... grid'
+		print '   --wave[=waveform,frequency,noise,noiseBasis,noiseOctaves,noiseSoften,direction,invert] .. a wave'
+		print '   --clock[=waveform,frequency,noise,noiseBasis,noiseOctaves,noiseSoften,direction,invert] .. a smooth clockface or cone'
+		print '   --turbulence[=turbSize] .. sea turbulence'
+		print '   --smooth=[undersize] ..... smooth noise'
+		print '   --polar ................ convert to polar space'
+		print '   --cartesian ............ convert to cartesian space'
+		print '   --fft .................. convert to frequency space'
+		print '   --ifft ................. convert from frequency space'
+		print '   --random ............... random static'
+		print '   --mode=[average|displace] .. how to combine textures'
+		print '   --save=[filename] ...... save out the result'

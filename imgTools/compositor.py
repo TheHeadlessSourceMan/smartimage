@@ -10,6 +10,8 @@ from helper_routines import *
 
 def adjustOpacity(image,amount=1.0):
 	"""
+	Adjust the total opacity of an image
+	
 	image: the image to be changed
 	amount: 1.0=fully opaque 0.0=fully transparent
 

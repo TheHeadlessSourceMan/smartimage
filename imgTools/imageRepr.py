@@ -87,6 +87,8 @@ def pilImage(img,loader=None):
 		img=loader(img)
 	else:
 		# convert numpy array
+		from helper_routines import clampImage
+		img=clampImage(img)
 		mode=imageMode(img)
 		if isFloat(img):
 			img=np.round(img*255)
@@ -280,6 +282,7 @@ def makeSameMode(images):
 		images=[changeMode(img,maxmode) for img in images]
 	return images
 
+	
 if __name__ == '__main__':
 	import sys
 	# Use the Psyco python accelerator if available

@@ -1,7 +1,7 @@
 #!/usr/bin/env
 # -*- coding: utf-8 -*-
 """
-	This program allows an image to behave smartly and automatically
+This program allows an image to behave smartly and automatically
 """
 import os
 import zipfile
@@ -20,7 +20,7 @@ class SmartImage(Layer):
 	The object acts as an array of pages/frames (array of 1 if it's just a simple image)
 	"""
 
-	def __init__(self,filename,xmlName='smartimage.xml',topSmartimage=None):
+	def __init__(self,filename=None,xmlName='smartimage.xml',topSmartimage=None):
 		Layer.__init__(self,self,None,None)
 		self._hasRunUi=False
 		self._nextId=None
@@ -366,8 +366,39 @@ class SmartImage(Layer):
 			cropTo=(idx,0,idx+size[0],size[1])
 			image=image.crop(cropTo)
 		return image
+		
+		
+def registerPILPligin():
+	"""
+	Register smartimage with PIL (the Python Imaging Library)
+	"""
+	from PIL import ImageFile
+	class SmartImageFile(ImageFile.ImageFile,SmartImage):
+		def _open(self):
+			try:
+				self.smartimage=self.load(self.fp)
+			except:
+				raise SyntaxError("Not a SmartImage file")
+	def _accept(prefix):
+		return prefix[:2]==b"PK" or prefix[:1]==b"<"
+	def _save(smartImageFile,filename):
+		smartImageFile.save(filename)
+	formatName='SmartImage'
+	Image.register_open(formatName,SmartImageFile,_accept)
+	Image.register_save(formatName,_save)
+	Image.register_extension(formatName,".simg")
+	Image.register_extension(formatName,".simt")
+	Image.register_mime(formatName,"image/xml+smartimage")
+	print 'registered PIL plugin.'
 
+	
+def registerPlugins():
+	"""
+	Register SmartImage as a plugin to all known image programs
+	"""
+	registerPILPligin()
 
+	
 if __name__ == '__main__':
 	import sys
 	# Use the Psyco python accelerator if available
@@ -463,6 +494,8 @@ if __name__ == '__main__':
 					simg.varUi()
 				elif arg[0]=='--noui':
 					simg.autoUi=False
+				elif arg[0]=='--registerPlugins':
+					registerPlugins()
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
@@ -491,3 +524,4 @@ if __name__ == '__main__':
 		print '   --varui ....................... manually start user interface now, rather than wait till needed'
 		print '   --noui ........................ do not bring up a user interface (useful when setting vars manually)'
 		print '   --varfile[=name]=value ........ populate a variable based on a filename - if name is omitted, attempt to fill in variables smartly'
+		print '   --registerPlugins ............. Register SmartImage as a plugin to all known image programs'

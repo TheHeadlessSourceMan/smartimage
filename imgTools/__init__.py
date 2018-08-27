@@ -13,3 +13,5 @@ import morphology
 import colorSpaces
 import resizing
 import imageRepr
+import bounds
+import imagePlus

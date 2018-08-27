@@ -6,7 +6,6 @@ The base class for image layers
 from PIL import Image
 from imgTools import *
 from xmlBackedObject import *
-from bounds import Bounds
 import math
 
 
@@ -96,7 +95,7 @@ class RenderingContext(object):
 		return image
 
 
-class Layer(XmlBackedObject,Bounds):
+class Layer(XmlBackedObject,PilPlusImage):
 	"""
 	The base class for image layers
 	"""
@@ -279,6 +278,26 @@ class Layer(XmlBackedObject,Bounds):
 		"""
 		#return Image.new('L',(int(self.w),int(self.h)),0)
 		ref=self._getProperty('roi')
+		return self.docRoot.imageByRef(ref)
+		
+	@property
+	def normalMap(self):
+		"""
+		A 3d normal map, wherein red=X, green=Y, blue=Z (facing directly out from the screen)
+		"""
+		ref=self._getProperty('normalMap',None)
+		if ref==None:
+			ref=normalMapFromImage(self.image)
+		return self.docRoot.imageByRef(ref)
+		
+	@property
+	def bumpMap(self):
+		"""
+		a grayscale bump map or heightmap.
+		"""
+		ref=self._getProperty('bumpMap',None)
+		if ref==None:
+			ref=heightMapFromNormalMap(self.normalMap)
 		return self.docRoot.imageByRef(ref)
 
 	@property
