@@ -1,0 +1,29 @@
+testName (solid.test.Test) ... ok
+testName (simple_rice.test.Test) ... ok
+testName (text.test.Test) ... ok
+testName (references.test.Test) ... ok
+testName (link.test.Test) ... ok
+testName (link_image_size.test.Test) ... ok
+testName (mask_rice.test.Test) ... ok
+testName (modifier_rice.test.Test) ... ok
+testName (procedural_textures.test.Test) ... FAIL
+testName (smartresize_picnic.test.Test) ... ok
+testName (smartresize_rice.test.Test) ... ok
+testName (template_picnic.test.Test) ... ok
+testName (text_picnic.test.Test) ... ok
+testName (rotation_whammy.test.Test) ... ok
+testName (variable_context.test.Test) ... ok
+testName (collage.test.Test) ... ok
+
+======================================================================
+FAIL: testName (procedural_textures.test.Test)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\backed_up\computers\formats\smartimage\test\procedural_textures\test.py", line 29, in testName
+    assert self.dut.compareOutput(__HERE__+'desiredOutput.png')
+AssertionError
+
+----------------------------------------------------------------------
+Ran 16 tests in 9.220s
+
+FAILED (failures=1)

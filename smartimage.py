@@ -244,19 +244,35 @@ class SmartImage(Layer):
 		self.xmlName=xmlName
 
 	def save(self,filename=None):
+		"""
+		Save this image.
+		
+		If the filename is something other than a smartimage
+		(eg. a .png file) then will save the rendered output.
+		
+		:param filename: the filename to save.  If unspecified,
+			save as the currently loaded filename
+		"""
 		self.varUi(force=False)
 		if filename==None:
 			filename=self.filename
-		zf=zipfile.ZipFile(filename,'w')
-		for name in self.componentNames:
-			component=self.getComponent(name)
-			if name.rsplit('.') in ['xml']:
-				compress_type=zipfile.ZIP_DEFLATED
+		extn=filename.rsplit(os.sep,1)[-1].rsplit('.',1)
+		if len(extn)<2 or extn in ['zip','simg','simt']:
+			zf=zipfile.ZipFile(filename,'w')
+			for name in self.componentNames:
+				component=self.getComponent(name)
+				if name.rsplit('.') in ['xml']:
+					compress_type=zipfile.ZIP_DEFLATED
+				else:
+					compress_type=zipfile.ZIP_STORED
+				zf.writestr(name,component.read(),compress_type)
+			zf.close()
+		else:
+			result=self.renderImage()
+			if result==None:
+				print 'ERR: No output to save.'
 			else:
-				compress_type=zipfile.ZIP_STORED
-			zf.writestr(name,component.read(),compress_type)
-		zf.flush()
-		zf.close()
+				result.save(filename)
 
 	def setVariable(self,name,value):
 		"""
@@ -306,8 +322,8 @@ class SmartImage(Layer):
 		"""
 		if force or (self.autoUi and not self._hasRunUi and self.hasUserVariables()):
 			self._hasRunUi=True
-			import tkVarsWindow
-			tkVarsWindow.runVarsWindow(self.variables,self.filename)
+			import ui.tkVarsWindow
+			ui.tkVarsWindow.runVarsWindow(self.variables,self.filename)
 
 	def renderImage(self,renderContext=None):
 		"""

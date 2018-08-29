@@ -6,6 +6,7 @@ all of different numbers of color channels
 """
 import numpy as np
 from PIL import Image
+from resizing import makeSameSize
 
 
 #-------------- numpy <-> PIL smart conversion
@@ -21,6 +22,8 @@ def defaultLoader(f):
 	"""
 	if isinstance(f,np.ndarray) or isinstance(f,Image.Image):
 		return f
+	if f==None:
+		return Image.new('RGBA',(1,1),(255,255,255,0))
 	if type(f) in [str,unicode]:
 		proto=f.split('://',1)
 		if len(proto)>2 and proto.find('/')<0:
@@ -199,7 +202,7 @@ def setAlpha(image,alpha):
 		alpha=getAlpha(alpha,alwaysCreate=False) # make sure we have a grayscale to combine
 		if type(alpha)==type(None):
 			return image
-	image,alpha=makeSamegetSize(image,alpha,(0,0,0,0))
+	image,alpha=makeSameSize(image,alpha,(0,0,0,0))
 	if hasAlpha(image):
 		channels=np.asarray(image)
 		alpha1=np.minimum(channels[:,:,-1],alpha) # Darken blend mode

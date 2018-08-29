@@ -3,8 +3,10 @@
 """
 Contains a litany of resizing/pasting/cropping routines
 """
-from imageRepr import *
+import imageRepr
 from bounds import *
+import numpy as np
+from PIL import Image
 
 
 def imageBorder(img,thickness,edge="#ffffff00"):
@@ -140,13 +142,13 @@ def extendImageCanvas(pilImage,newBounds,extendColor=(128,128,128,0)):
 		mode="RGB"
 	else:
 		mode="RGBA"
-	mode=maxMode(mode,pilImage)
+	mode=imageRepr.maxMode(mode,pilImage)
 	img=Image.new(mode,(int(w),int(h)),extendColor)
 	x=max(0,w/2-pilImage.width/2)
 	y=max(0,h/2-pilImage.height/2)
-	if hasAlpha(mode):
-		if not hasAlpha(pilImage):
-			pilImage=pilImage.convert(maxMode(pilImage,requireAlpha=True))
+	if imageRepr.hasAlpha(mode):
+		if not imageRepr.hasAlpha(pilImage):
+			pilImage=pilImage.convert(imageRepr.maxMode(pilImage,requireAlpha=True))
 		img.alpha_composite(pilImage,dest=(int(x),int(y)))
 	else:
 		img.paste(pilImage,box=(int(x),int(y)))
@@ -168,6 +170,7 @@ def paste(image,overImage,position=(0,0),resize=True):
 
 	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
 	"""
+	image=imageRepr.pilImage(image)
 	if image==None:
 		return overImage
 	if overImage==None:
@@ -175,19 +178,19 @@ def paste(image,overImage,position=(0,0),resize=True):
 			return image
 		else:
 			# create a blank background
-			overImage=Image.new(maxMode(image,requireAlpha=True),(int(image.width+position[0]),int(image.height+position[1])))
+			overImage=Image.new(imageRepr.maxMode(image,requireAlpha=True),(int(image.width+position[0]),int(image.height+position[1])))
 	elif (image.width+position[0]>overImage.width) or (image.height+position[1]>overImage.height):
 		# resize the overImage if necessary
 		newImg=Image.new(
 			size=(int(max(image.width+position[0],overImage.width)),int(max(image.height+position[1],overImage.height))),
-			mode=maxMode(image,overImage,requireAlpha=True))
+			mode=imageRepr.maxMode(image,overImage,requireAlpha=True))
 		paste(overImage,newImg)
 		overImage=newImg
 	elif hasattr(overImage,'immutable') and overImage.immutable==True:
 		# if it is flagged immutable, create a copy that we are allowed to change
 		overImage=overImage.copy()
 	# do the deed
-	if hasAlpha(image):
+	if imageRepr.hasAlpha(image):
 		# TODO: which of these two lines is best?
 		#overImage.paste(image,position,image) # NOTE: (image,(x,y),alphaMask)
 		if overImage.mode!=image.mode:

@@ -16,7 +16,7 @@ class Bounds(object):
 		self.w=None
 		self.h=None
 
-	def __str__(self):
+	def repr(self):
 		return str(self.points)
 
 	def __len__(self):

@@ -1,17 +1,18 @@
-import autoInterest
-import backgrounds
-import colorAdjust
-import compositor
-import helper_routines
-import numberSpaces
-import proceduralTextures
-import selectionsAndPaths
-import convolution
-import colors
-import gradients
-import morphology
-import colorSpaces
-import resizing
-import imageRepr
-import bounds
-import imagePlus
+from autoInterest import *
+from backgrounds import *
+from bounds import *
+from colorCorrect import *
+from colors import *
+from colorSpaces import *
+from compositor import *
+from convolution import *
+from gradients import *
+from helper_routines import *
+from imageRepr import *
+from morphology import *
+from numberSpaces import *
+from pilPlus import *
+from proceduralTextures import *
+from pseudo3d import *
+from resizing import *
+from selectionsAndPaths import *

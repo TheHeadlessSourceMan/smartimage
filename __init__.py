@@ -1,12 +1,12 @@
-import frame
-import image
-import layer
-import link
-import modifier
-import page
-import pattern
-import smartimage
-import solid
-import text
-import texture
-import variable
+from frame import *
+from image import *
+from layer import *
+from link import *
+from modifier import *
+from page import *
+from pattern import *
+from smartimage import *
+from solid import *
+from text import *
+from texture import *
+from variable import *

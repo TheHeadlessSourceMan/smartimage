@@ -1,20 +1,20 @@
 #!/usr/bin/env
 # -*- coding: utf-8 -*-
 """
-This is an experimental wrapper for PIL images allowing advanced access
+This is an experimental extension of PIL images allowing advanced access
 """
 from PIL import Image
 from bounds import Bounds
-from colorspaces import *
+from colorSpaces import *
 
 
-class PilPlusImage(Image,Bounds):
+class PilPlusImage(Image.Image,Bounds):
 	"""
-	This is a wrapper for PIL images allowing advanced access
+	This is an experimental extension of PIL images allowing advanced access
 	"""
 	
 	def __init__(self,image=None):
-		Image.__init__(self)
+		Image.Image.__init__(self)
 		Bounds.__init__(self)
 		self._activeChannels={}
 		self._image=None
@@ -94,6 +94,9 @@ class PilPlusImage(Image,Bounds):
 			Bounds.assign(self,sizeOrImage)
 		else:
 			self.image=sizeOrImage
+			
+	def __repr__(self):
+		s='Image '+str(self.bounds)+' mode:'+self.mode+' source:'+srt(self.filename)
 		
 	@property
 	def R(self):

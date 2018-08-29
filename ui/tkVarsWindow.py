@@ -3,6 +3,7 @@ import tkFileDialog
 import ScrolledText
 import os
 
+
 class FileBrowser:
 	def __init__(self,varsWindow,variableName):
 		self.varsWindow=varsWindow
@@ -15,6 +16,7 @@ class FileBrowser:
 		print 'chose',self.variableName,self.varsWindow.tkVars[self.variableName],filename
 		self.varsWindow.tkVars[self.variableName]=filename
 
+		
 class ToolTip:
 	def __init__(self,bindToControl,text):
 		self.text=text
@@ -61,8 +63,9 @@ class ToolTip:
 			self.tipWindow.destroy()
 			self.tipWindow=None
 		
+		
 class TkVariablesWindow(Frame):
-	ICON_PATH=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep+'icon.ico'
+	ICON_PATH=os.path.abspath(__file__).rsplit(os.sep,2)[0]+os.sep+'icon.ico'
 	
 	def __init__(self,name,variables,master=None):
 		"""

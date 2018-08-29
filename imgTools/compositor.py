@@ -6,6 +6,7 @@ Implementation of photoshop/gimp blend modes in python.
 from PIL import Image, ImageChops, ImageEnhance
 import numpy as np
 from helper_routines import *
+from resizing import *
 
 
 def adjustOpacity(image,amount=1.0):
@@ -412,12 +413,13 @@ def composite(image,overImage,opacity=1.0,blendMode='normal',mask=None,position=
 	if image==None or opacity<=0.0:
 		return overImage
 	if overImage==None:
-		if opacity==1.0 and mask==None and position==(0,0):
+		size=(int(image.width+position[0]),int(image.height+position[1]))
+		if (opacity==1.0 and mask==None and position==(0,0)) or size[0]<=0 or size[1]<=0:
 			# there is nothing to change
 			return image
 		else:
 			# create a blank background
-			overImage=Image.new(maxMode(image,requireAlpha=True),(int(image.width+position[0]),int(image.height+position[1])))
+			overImage=Image.new(maxMode(image,requireAlpha=True),size)
 	if mask!=None: # apply mask BEFORE opacity
 		image=setAlpha(image,mask)
 	if opacity!=1.0: # apply opacity before blending

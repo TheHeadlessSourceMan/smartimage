@@ -224,13 +224,13 @@ def photoFilter(image,filter,density=1.0,preserveLuminosity=True):
 def posterize(image):
 	"""
 	Posterize an image, that is, more or less to clamp each color to the nearest multiple of 1/4
-	
+
 	:param image: the image to posterize
-	
+
 	:return: the converted image
 	"""
 	image=numpyArray(image)
-    return np.where(image<=0.25,0.20,np.where(image<=0.5,0.40,np.where(image<=0.75,0.60,0.80)))
+	return np.where(image<=0.25,0.20,np.where(image<=0.5,0.40,np.where(image<=0.75,0.60,0.80)))
 	
 	
 def solarize(image):
@@ -257,7 +257,7 @@ def sepia(image):
 	NOTE: This can be done in more generic by combining filters ways.
 	"""
 	image=numpyArray(image)
-    return [
+	return [
 		(image[:,:,0]*0.393)+(image[:,:,1]*0.769)+(image[:,:,2]*0.189),
 		(image[:,:,0]*0.349)+(image[:,:,1]*0.686)+(image[:,:,2]*0.168),
 		(image[:,:,0]*0.272)+(image[:,:,1]*0.534)+(image[:,:,2]*0.131)]

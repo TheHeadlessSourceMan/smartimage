@@ -9,13 +9,19 @@ import tkMessageBox as messagebox
 import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 from smartimage import *
-from layer import Layer
-import backgrounds
+from smartimage.imgTools import *
 import time
+
 
 HERE=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep
 
+
 class FileWatcher(object):
+	"""
+	A snazzy little tool to watch a filename for changes
+	and notify us if it happens.
+	"""
+	
 	def __init__(self,filename):
 		if os.path.isdir(filename):
 			filename=filename+os.sep+'smartimage.xml'
@@ -48,6 +54,11 @@ class FileWatcher(object):
 
 
 class TreeviewPanel(tk.Frame):
+	"""
+	Display a treeview of image layers.  Get notified
+	back whenever the selection changes.
+	"""
+	
 	def __init__(self, master, smartimage,viewer=None):
 		tk.Frame.__init__(self,master)
 		self.thumbnailSize=(50,50)
@@ -126,6 +137,10 @@ class TreeviewPanel(tk.Frame):
 
 
 class ImagePanel(tk.Frame):
+	"""
+	A scrollable panel whose only purpose in life is to display an image.
+	"""
+	
 	def __init__(self,master,smartimage,allowRaise):
 		self.allowRaise=allowRaise
 		self.smartimage=smartimage
@@ -208,7 +223,7 @@ def runUI(smartimage,mode='edit',allowRaise=False):
 	if type(smartimage) in [str,unicode]:
 		smartimage=SmartImage(smartimage)
 	root = tk.Tk()
-	root.iconbitmap(HERE+'icon.ico')
+	root.iconbitmap(HERE+'..'+os.sep+'icon.ico')
 	filename=smartimage.filename
 	if filename==None:
 		filename='Untitled'

@@ -4,6 +4,7 @@
 This is a layer of a solid color (same nomenclature as Adobe AfterEffects)
 """
 from layer import *
+from imgTools import *
 import struct
 
 
@@ -27,22 +28,14 @@ class Solid(Layer):
 			#FFFFFFFF
 			rgb(128,12,23)
 			rgba(234,33,23,0)
+			
+		If self.color is not specified, return [255,255,255,0]
 		"""
-		s=self.color
-		if s.find('(')>=0:
-			ret=[int(c.strip()) for c in s.split('(',1)[-1].rsplit(')',1)[0].split(',')]
-		else:
-			format='B'*int(len(s)/2)
-			ret=[c for c in struct.unpack(format,s.split('#',1)[-1].decode('hex'))]
-		while len(ret)<3:
-			ret.append(ret[0])
-		if len(ret)<4:
-			ret.append(255)
-		return tuple(ret)
+		return strToColor(self.color,False,[255,255,255,0])
 
 	@property
 	def image(self):
-		return Image.new('RGBA',(int(self.w),int(self.h)),self.rgba)
+		return Image.new('RGBA',(int(self.w),int(self.h)),tuple(self.rgba))
 
 
 if __name__ == '__main__':

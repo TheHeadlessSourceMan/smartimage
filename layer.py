@@ -6,6 +6,7 @@ The base class for image layers
 from PIL import Image
 from imgTools import *
 from xmlBackedObject import *
+from imgTools import *
 import math
 
 
@@ -19,7 +20,7 @@ class RenderingContext(object):
 		self.cur_rot=0
 		self.cur=Bounds(0,0,0,0)
 		self.cur_image=None
-		self.visitedLayers=[]
+		self.visitedLayers={}
 		self.variableContexts=[] # an array of dicts
 		
 	def getVariableValue(self,name):
@@ -58,14 +59,14 @@ class RenderingContext(object):
 		# loop prevention
 		if layer in self.visitedLayers:
 			raise Exception('ERR: Link loop with layer '+str(layer.id)+' "'+layer.name+'"')
-		self.visitedLayers.append(layer)
+		self.visitedLayers[layer]=True
 		# push a new variable context
 		self.variableContexts.append({})
 		# do we need to do anything?
 		opacity=layer.opacity
 		if opacity<=0.0 or layer.visible==False:
 			self.log('skipping',layer.name)
-			del self.visitedLayers[-1]
+			del self.visitedLayers[layer]
 			return None
 		self.log('creating',layer.name)
 		image=layer.image
@@ -90,7 +91,7 @@ class RenderingContext(object):
 			self.log('info',layer.name,'mode='+image.mode,'bounds='+str((0,0,image.width,image.height)))
 		self.log('finished',layer.name)
 		# pop off tracking info for this layer
-		del self.visitedLayers[-1]
+		del self.visitedLayers[layer]
 		del self.variableContexts[-1]
 		return image
 
@@ -104,7 +105,7 @@ class Layer(XmlBackedObject,PilPlusImage):
 		self.parent=parent
 		self._lastRenderedImage=None
 
-	def __str__(self):
+	def __repr__(self):
 		name=self.name
 		if len(name)>0:
 			return 'Layer '+str(self.id)+' - "'+name+'"'
@@ -231,8 +232,8 @@ class Layer(XmlBackedObject,PilPlusImage):
 			import text
 			child=text.TextLayer(doc,parent,xml)
 		elif xml.tag=='link':
-			import linkLayer
-			child=linkLayer.Link(doc,parent,xml)
+			import link
+			child=link.Link(doc,parent,xml)
 		elif xml.tag=='image':
 			import image
 			child=image.ImageLayer(doc,parent,xml)
@@ -250,6 +251,9 @@ class Layer(XmlBackedObject,PilPlusImage):
 		elif xml.tag=='pattern':
 			import pattern
 			child=pattern.Pattern(doc,parent,xml)
+		elif xml.tag=='particles':
+			import particles
+			child=particles.Particles(doc,parent,xml)
 		elif xml.tag=='ext':
 			import extension
 			child=extension.Extension(doc,parent,xml)
@@ -299,6 +303,10 @@ class Layer(XmlBackedObject,PilPlusImage):
 		if ref==None:
 			ref=heightMapFromNormalMap(self.normalMap)
 		return self.docRoot.imageByRef(ref)
+		
+	def compareOutput(self,compareTo,tolerance=0.99999):
+		rendered=self.renderImage()
+		return compareImage(rendered,compareTo,tolerance)
 
 	@property
 	def image(self):

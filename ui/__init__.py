@@ -1,2 +1,2 @@
-import tkLighterightUI
+import tkLightweightUI
 import tkVarsWindow

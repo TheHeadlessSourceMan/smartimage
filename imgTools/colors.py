@@ -158,7 +158,7 @@ HTML_COLOR_NAMES={
 	}
 
 	
-def strToColor(s,asFloat=True):
+def strToColor(s,asFloat=True,defaultColor=[255,255,255,0]):
 	"""
 	convert an html color spec to a color array
 	
@@ -175,22 +175,30 @@ def strToColor(s,asFloat=True):
 	:returns: an rgba[]
 	"""
 	import struct
+	if type(s)==None:
+		ret=defaultColor
 	if type(s) not in [str,unicode]:
 		if type(s)==tuple:
 			s=[ch for ch in s]
 		ret=s
-	elif s in HTML_COLOR_NAMES:
-		ret=HTML_COLOR_NAMES[s][1]
 	else:
-		if s.find('(')>=0:
-			ret=[int(c.strip()) for c in s.split('(',1)[-1].rsplit(')',1)[0].split(',')]
+		s=s.strip().lower()
+		if len(s)==0:
+			if type(defaultColor) not in [str,unicode]:
+				return defaultColor
+			s=defaultColor
+		if s in HTML_COLOR_NAMES:
+			ret=HTML_COLOR_NAMES[s][1]
 		else:
-			format='B'*int(len(s)/2)
-			ret=[c for c in struct.unpack(format,s.split('#',1)[-1].decode('hex'))]
-		while len(ret)<3:
-			ret.append(ret[0])
-		if len(ret)<4:
-			ret.append(255)
+			if s.find('(')>=0:
+				ret=[int(c.strip()) for c in s.split('(',1)[-1].rsplit(')',1)[0].split(',')]
+			else:
+				format='B'*int(len(s)/2)
+				ret=[c for c in struct.unpack(format,s.split('#',1)[-1].decode('hex'))]
+			while len(ret)<3:
+				ret.append(ret[0])
+			if len(ret)<4:
+				ret.append(255)
 	# force into float or int
 	for i in range(len(ret)):
 		if type(ret[i])!=int:

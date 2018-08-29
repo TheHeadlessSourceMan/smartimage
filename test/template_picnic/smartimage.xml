@@ -1,0 +1,13 @@
+<smartimage id="0">
+	<form>
+		<textarea name="message" rows="10" cols="30"></textarea>
+		<select name="cars" size="4" multiple="True">
+		  <option value="volvo">Volvo</option>
+		  <option value="saab">Saab</option>
+		  <option value="fiat">Fiat</option>
+		  <option value="audi">Audi</option>
+		</select> 
+	</form>
+	<image  id="1" file="../picnic.jpg" />
+	<text  id="2" font="Hi Melody" x="10" y="-10" color="#ff00ff">@message</text>
+</smartimage>
