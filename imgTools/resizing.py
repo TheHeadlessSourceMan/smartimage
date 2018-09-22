@@ -3,9 +3,15 @@
 """
 Contains a litany of resizing/pasting/cropping routines
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 import imageRepr
 from bounds import *
-import numpy as np
 from PIL import Image
 
 

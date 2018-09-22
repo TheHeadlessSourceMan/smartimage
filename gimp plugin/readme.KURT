@@ -1,0 +1,9 @@
+This is a great example for smartimage
+
+But first we want to write a gimp import/export tool.
+There are some links here to gimp plugins
+Don't forget to use the menu help->procedure_browser and help->plug_in_browser
+also i put a link to the plugins dir
+
+TODO: installer does not work due to friggin windows permissions.
+	You have to manually make the plugins dir writeable, which sucks!

@@ -4,7 +4,13 @@
 This allows easy conversion between pil images, numpy arrays, and filenames, int/float 
 all of different numbers of color channels
 """
-import numpy as np
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 from PIL import Image
 from resizing import makeSameSize
 

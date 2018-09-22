@@ -3,12 +3,18 @@
 """
 Tools to create/apply pseudo 3d data, including relighting.
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 from helper_routines import *
 from imageRepr import *
 from colors import *
 from resizing import *
 from colorSpaces import *
-import numpy as np
 import scipy.ndimage
 import math
  

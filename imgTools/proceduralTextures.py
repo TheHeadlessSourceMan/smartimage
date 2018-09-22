@@ -7,11 +7,17 @@ TODO: see also:
 	https://developer.blender.org/diffusion/B/browse/master/source/blender/render/intern/source/render_texture.c
 
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 import scipy.ndimage,scipy.signal
 import os,subprocess,time
 from helper_routines import *
 from PIL import Image,ImageDraw
-import numpy as np
 import math
 from selectionsAndPaths import *
 

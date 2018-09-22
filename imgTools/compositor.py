@@ -3,8 +3,14 @@
 """
 Implementation of photoshop/gimp blend modes in python.
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 from PIL import Image, ImageChops, ImageEnhance
-import numpy as np
 from helper_routines import *
 from resizing import *
 

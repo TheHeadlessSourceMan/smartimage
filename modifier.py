@@ -3,10 +3,16 @@
 """
 This is a modifier layer such as blur, sharpen, posterize, etc
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 from layer import *
 from imgTools import *
 from PIL import ImageFilter, ImageOps, ImageEnhance
-import numpy as np
 
 
 class Modifier(Layer):

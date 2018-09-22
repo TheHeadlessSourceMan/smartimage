@@ -3,13 +3,19 @@
 """
 This program allows an image to behave smartly and automatically
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 import os
 import zipfile
 import lxml.etree
 from layer import *
 from variable import *
 from collections import OrderedDict
-import numpy as np
 from PIL import ImageDraw
 
 

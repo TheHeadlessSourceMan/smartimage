@@ -42,7 +42,7 @@ class Variable(XmlBackedObject):
 	def __float__(self):
 		return float(self.value)
 		
-	def __str__(self):
+	def __repr__(self):
 		return str(self.value)
 		
 	def __bool__(self):
@@ -50,5 +50,5 @@ class Variable(XmlBackedObject):
 		# must call toBool directly!
 		return self.toBool()
 	def toBool(self):
-		s=self.__str__()
+		s=self.__repr__()
 		return len(s)>0 and (s[0] in 'YyTt1')

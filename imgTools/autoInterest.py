@@ -5,7 +5,13 @@ This automatically detects regions of interest in an image.
 """
 import os
 from PIL import Image, ImageOps, ImageChops, ImageEnhance, ImageDraw
-import numpy as np
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 try:
 	import cv2
 	has_opencv=True

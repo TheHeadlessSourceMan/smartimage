@@ -6,7 +6,13 @@ Tools for performing operations in different number domains, such as:
 	polar
 	frequency
 """
-import numpy as np
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 from helper_routines import *
 
 
