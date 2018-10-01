@@ -14,6 +14,12 @@ except ImportError:
 	# if not, plain old numpy is good enough
 	import numpy as np
 from helper_routines import *
+try:
+	import pywt
+except ImportError,e:
+	print "ERR: Missing PyWavelet."
+	print "Install with:\n\tpip install PyWavelet\nOr go to:\n\thttps://pywavelets.readthedocs.io"
+	raise e
 
 
 def gradient(img):
@@ -96,6 +102,137 @@ def kuwahara(img):
 	"""
 	raise NotImplementedError()
 	
+
+def toCosine(img):
+	return scipy.fftpack.dctn(img)
+def fromCosine(img):
+	return scipy.fftpack.idctn(img)
+	
+def toSine(img):
+	return scipy.fftpack.dstn(img)
+def fromSine(img):
+	return scipy.fftpack.idstn(img)
+	
+def toLaplacianPyramid(img,levels):
+	return lapl_pyramid(gauss_pyramid(img,levels))
+def fromLaplacianPyramid(img):
+	return collapse(img)
+	
+
+def generating_kernel(a):
+	"""
+	generate a 5x5 kernel
+	
+	Comes from:
+		https://compvisionlab.wordpress.com/2013/05/13/image-blending-using-pyramid/
+	"""
+	w_1d = np.array([0.25 - a/2.0, 0.25, a, 0.25, 0.25 - a/2.0])
+	return np.outer(w_1d, w_1d)
+ 
+
+def ireduce(image):
+	"""
+	reduce image by 1/2
+	
+	Comes from:
+		https://compvisionlab.wordpress.com/2013/05/13/image-blending-using-pyramid/
+	"""
+	out = None
+	kernel = generating_kernel(0.4)
+	outimage = scipy.signal.convolve2d(image,kernel,'same')
+	out = outimage[::2,::2]
+	return out
+ 
+
+def iexpand(image):
+	"""
+	expand image by factor of 2
+	
+	Comes from:
+		https://compvisionlab.wordpress.com/2013/05/13/image-blending-using-pyramid/
+	"""
+	out = None
+	kernel = generating_kernel(0.4)
+	outimage = np.zeros((image.shape[0]*2, image.shape[1]*2), dtype=np.float64)
+	outimage[::2,::2]=image[:,:]
+	out = 4*scipy.signal.convolve2d(outimage,kernel,'same')
+	return out
+ 
+
+def gauss_pyramid(image, levels):
+	"""
+	create a gaussain pyramid of a given image
+	
+	Comes from:
+		https://compvisionlab.wordpress.com/2013/05/13/image-blending-using-pyramid/
+	"""
+	output = []
+	output.append(image)
+	tmp = image
+	for i in range(0,levels):
+		tmp = ireduce(tmp)
+		output.append(tmp)
+	return output
+ 
+
+def lapl_pyramid(gauss_pyr):
+	"""
+	build a laplacian pyramid
+	
+	Comes from:
+		https://compvisionlab.wordpress.com/2013/05/13/image-blending-using-pyramid/
+	"""
+	output = []
+	k = len(gauss_pyr)
+	for i in range(0,k-1):
+		gu = gauss_pyr[i]
+		egu = iexpand(gauss_pyr[i+1])
+		if egu.shape[0] > gu.shape[0]:
+			egu = np.delete(egu,(-1),axis=0)
+		if egu.shape[1] > gu.shape[1]:
+			egu = np.delete(egu,(-1),axis=1)
+		output.append(gu - egu)
+	output.append(gauss_pyr.pop())
+	return output
+  
+def blend(lapl_pyr_white, lapl_pyr_black, gauss_pyr_mask):
+	"""
+	Blend the two laplacian pyramids by weighting them according to the mask.
+	
+	Comes from:
+		https://compvisionlab.wordpress.com/2013/05/13/image-blending-using-pyramid/
+	"""
+	blended_pyr = []
+	k= len(gauss_pyr_mask)
+	for i in range(0,k):
+		p1= gauss_pyr_mask[i]*lapl_pyr_white[i]
+		p2=(1 - gauss_pyr_mask[i])*lapl_pyr_black[i]
+		blended_pyr.append(p1 + p2)
+	return blended_pyr
+
+def collapse(lapl_pyr):  
+	"""
+	Reconstruct the image based on its laplacian pyramid.
+	
+	Comes from:
+		https://compvisionlab.wordpress.com/2013/05/13/image-blending-using-pyramid/
+	"""
+	output = None
+	output = np.zeros((lapl_pyr[0].shape[0],lapl_pyr[0].shape[1]), dtype=np.float64)
+	for i in range(len(lapl_pyr)-1,0,-1):
+		lap = iexpand(lapl_pyr[i])
+		lapb = lapl_pyr[i-1]
+		if lap.shape[0] > lapb.shape[0]:
+			lap = np.delete(lap,(-1),axis=0)
+		if lap.shape[1] > lapb.shape[1]:
+			lap = np.delete(lap,(-1),axis=1)
+		tmp = lap + lapb
+		lapl_pyr.pop()
+		lapl_pyr.pop()
+		lapl_pyr.append(tmp)
+		output = tmp
+	return output
+
 	
 def toFrequency(img):
 	"""
@@ -135,6 +272,7 @@ def cartesian2polar(img, center=None, final_radius=None, initial_radius = None, 
 		https://stackoverflow.com/questions/9924135/fast-cartesian-to-polar-to-cartesian-in-python
 	"""	
 	from scipy.ndimage.interpolation import map_coordinates
+	img=numpyArray(img)
 	if center==None:
 		center=(img.shape[0]/2,img.shape[1]/2)
 	if final_radius==None:
@@ -282,6 +420,130 @@ def logpolar2cartesian(polar_data):
 	# The data is reshaped and returned
 	return(cart_data.reshape(len(Y), len(X)).T)
 	
+
+def _wavelet(wavelet='haar'):
+	"""
+	:param wavelet: any common, named wavelet, including
+			'Haar' (default)
+			'Daubechies'
+			'Symlet'
+			'Coiflet'
+			'Biorthogonal'
+			'ReverseBiorthogonal'
+			'DiscreteMeyer'
+			'Gaussian'
+			'MexicanHat'
+			'Morlet'
+			'ComplexGaussian'
+			'Shannon'
+			'FrequencyBSpline'
+			'ComplexMorlet'
+		or a custom [ [lowpass_decomposition],
+			[highpass_decomposition],
+			[lowpass_reconstruction],
+			[highpass_reconstruction] ]
+		where each is a pair of floating point values
+		
+		NOTE: Coefficients for the hundreds of built-in wavelets can be found at:
+			http://wavelets.pybytes.com/
+	"""
+	nameMap={
+		'haar':'haar',
+		'daubechies':'db1',
+		'symlet':'sym1',
+		'coiflet':'coif1',
+		'biorthogonal':'bior1.1',
+		'reversebiorthogonal':'rbio1.1',
+		'discretemeyer':'dmey',
+		'gaussian':'gaus1',
+		'mexicanhat':'mexh',
+		'morlet':'morl',
+		'complexgaussian':'cgau1',
+		'shannon':'shan',
+		'frequencybspline':'fbsp',
+		'complexmorlet':'cmor'
+		}
+	#print pywt.wavelist()
+	if type(wavelet)==list:
+		return pywt.Wavelet(name="myLilWavelet",filter_bank=wavelet)
+	return nameMap[wavelet.lower().replace(' ','').replace('_','')]
+	
+	
+def toWavelet(img,wavelet='haar',mode='symmetric',level=None):
+	"""
+	:param img: any supported image type to transform into wavelet space
+	:param wavelet: any common, named wavelet, including
+			'Haar' (default)
+			'Daubechies'
+			'Symlet'
+			'Coiflet'
+			'Biorthogonal'
+			'ReverseBiorthogonal'
+			'DiscreteMeyer'
+			'Gaussian'
+			'MexicanHat'
+			'Morlet'
+			'ComplexGaussian'
+			'Shannon'
+			'FrequencyBSpline'
+			'ComplexMorlet'
+		or a custom [ [lowpass_decomposition],
+			[highpass_decomposition],
+			[lowpass_reconstruction],
+			[highpass_reconstruction] ]
+		where each is a pair of floating point values
+	:param mode: str or 2-tuple of str, optional
+		Signal extension mode, see Modes (default: "symmetric"). This can also be a tuple containing a mode to apply along each axis in axes.
+	:param level: int, optional
+		Decomposition level (must be >= 0). If level is None (default) then it will be calculated using the dwt_max_level function.
+		
+	See also:
+		https://pywavelets.readthedocs.io/en/latest/ref/index.html
+	"""
+	if mode==None:
+		mode='symmetric'
+	img=numpyArray(img)
+	colorMode=imageMode(img)
+	if len(colorMode)==1:
+		return pywt.wavedec2(img,_wavelet(wavelet),mode,level)
+	ret=[]
+	for ch in range(len(colorMode)):
+		ret.append(np.array(pywt.wavedec2(img[:,:,ch],_wavelet(wavelet),mode,level)))
+	ret=np.dstack(ret)
+	return ret
+	
+	
+def fromWavelet(wavImg,wavelet='haar',mode='symmetric'):
+	"""
+	:param wavImg: a wavelet image to transform back into image space
+	:param wavelet: any common, named wavelet, including
+			'Haar' (default)
+			'Daubechies'
+			'Symlet'
+			'Coiflet'
+			'Biorthogonal'
+			'ReverseBiorthogonal'
+			'DiscreteMeyer'
+			'Gaussian'
+			'MexicanHat'
+			'Morlet'
+			'ComplexGaussian'
+			'Shannon'
+			'FrequencyBSpline'
+			'ComplexMorlet'
+		or a custom [ [lowpass_decomposition],
+			[highpass_decomposition],
+			[lowpass_reconstruction],
+			[highpass_reconstruction] ]
+		where each is a pair of floating point values
+	:param mode: str or 2-tuple of str, optional
+		Signal extension mode, see Modes (default: ‘symmetric’). This can also be a tuple containing a mode to apply along each axis in axes.
+		
+	See also:
+		https://pywavelets.readthedocs.io/en/latest/ref/index.html
+	"""
+	return pywt.waverec2(wavImg,_wavelet(wavelet),mode)
+	
 	
 if __name__ == '__main__':
 	import sys
@@ -297,17 +559,39 @@ if __name__ == '__main__':
 	if len(sys.argv)<2:
 		printhelp=True
 	else:
+		lastFilename=None
+		img=None
 		for arg in sys.argv[1:]:
 			if arg.startswith('-'):
 				arg=[a.strip() for a in arg.split('=',1)]
 				if arg[0] in ['-h','--help']:
 					printhelp=True
+				elif arg[0]=='--toWavelet':
+					if len(arg)>1:
+						img=toWavelet(img,arg[1])
+					else:
+						img=toWavelet(img)
+				elif arg[0]=='--fromWavelet':
+					if len(arg)>1:
+						img=fromWavelet(img,arg[1])
+					else:
+						img=fromWavelet(img)
+				elif arg[0]=='--show':
+					preview(img)
+				elif arg[0]=='--save':
+					if len(arg)>1:
+						lastFilename=arg[1]
+					pilImage(img).save(lastFilename)
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
-				print 'ERR: unknown argument "'+arg+'"'
+				lastFilename=arg
+				img=arg
 	if printhelp:
 		print 'Usage:'
-		print '  numberSpaces.py [options]'
+		print '  numberSpaces.py img.jpg [options]'
 		print 'Options:'
-		print '   NONE'
+		print '   --toWavelet[=wavelet] ....... where value can be things like haar or mortlet'
+		print '   --fromWavelet[=wavelet] ..... where value can be things like haar or mortlet'
+		print '   --show ...................... show the image'
+		print '   --save[=filename] ........... save the image (default is to save over the last filename)'

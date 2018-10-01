@@ -225,7 +225,7 @@ class Layer(XmlBackedObject,PilPlusImage):
 		child=None
 		if xml==self.xml or xml.__class__.__name__ in ['_Comment']:
 			pass
-		elif xml.tag in ['variable','form']:
+		elif xml.tag in ['form']:
 			# form elements do not belong to an image
 			pass
 		elif xml.tag=='text':
@@ -254,6 +254,9 @@ class Layer(XmlBackedObject,PilPlusImage):
 		elif xml.tag=='particles':
 			import particles
 			child=particles.Particles(doc,parent,xml)
+		elif xml.tag=='numberspace':
+			import numberspace
+			child=numberspace.NumberSpace(doc,parent,xml)
 		elif xml.tag=='ext':
 			import extension
 			child=extension.Extension(doc,parent,xml)

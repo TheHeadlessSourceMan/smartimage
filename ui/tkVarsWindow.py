@@ -117,8 +117,8 @@ class TkVariablesWindow(Frame):
 				else:
 					tkVar.set(0)
 				control.grid(row=row,column=0,columnspan=3,sticky="W")
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
 			elif v.uitype=='color':
 				# TODO: needs validation
 				label=Label(self,text=v.name.replace('_',' '))
@@ -128,74 +128,9 @@ class TkVariablesWindow(Frame):
 				control=Entry(self,textvariable=tkVar)
 				tkVar.set(v.value)
 				control.grid(row=row,column=1)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='date':
-				# TODO: needs validation
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='datetime':
-				# TODO: needs validation
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='datetime-local':
-				# TODO: needs validation
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='email':
-				# TODO: needs validation
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1,columnspan=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='file':
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1,sticky="EW")
-				fb=FileBrowser(self,v.name)
-				bn=Button(self,text='...',command=fb.onDialog)
-				bn.grid(row=row,column=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-					self.tooltips.append(ToolTip(bn,v.description))
-			elif v.uitype=='hidden':
-				pass
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
 			elif v.uitype=='image':
 				label=Label(self,text=v.name.replace('_',' '))
 				label.grid(row=row,column=0)
@@ -207,23 +142,11 @@ class TkVariablesWindow(Frame):
 				fb=FileBrowser(self,v.name)
 				bn=Button(self,text='...',command=fb.onDialog)
 				bn.grid(row=row,column=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-					self.tooltips.append(ToolTip(bn,v.description))
-			elif v.uitype=='month':
-				# TODO: needs validation
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='number':
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
+					self.tooltips.append(ToolTip(bn,v.tooltip))
+			elif v.uitype=='numeric':
 				# TODO: needs validation
 				label=Label(self,text=v.name.replace('_',' '))
 				label.grid(row=row,column=0)
@@ -232,9 +155,9 @@ class TkVariablesWindow(Frame):
 				control=Entry(self,textvariable=tkVar)
 				tkVar.set(v.value)
 				control.grid(row=row,column=1,columnspan=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
 			elif v.uitype=='password':
 				label=Label(self,text=v.name.replace('_',' '))
 				label.grid(row=row,column=0)
@@ -243,9 +166,9 @@ class TkVariablesWindow(Frame):
 				control=Entry(self,show='*',textvariable=tkVar)
 				tkVar.set(v.value)
 				control.grid(row=row,column=1,columnspan=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
 			elif v.uitype=='radio':
 				tkVar=IntVar()
 				self.tkVars[v.name]=tkVar
@@ -254,8 +177,8 @@ class TkVariablesWindow(Frame):
 				value=v.value
 				tkvar.set(value)
 				control.grid(row=row,column=0,columnspan=3)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
 			elif v.uitype=='range':
 				# TODO: needs validation
 				label=Label(self,text=v.name.replace('_',' '))
@@ -265,31 +188,9 @@ class TkVariablesWindow(Frame):
 				control=Entry(self,textvariable=tkVar)
 				tkVar.set(v.value)
 				control.grid(row=row,column=1,columnspan=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='search':
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1,columnspan=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
-			elif v.uitype=='tel':
-				label=Label(self,text=v.name.replace('_',' '))
-				label.grid(row=row,column=0)
-				tkVar=StringVar()
-				self.tkVars[v.name]=tkVar
-				control=Entry(self,textvariable=tkVar)
-				tkVar.set(v.value)
-				control.grid(row=row,column=1,columnspan=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
 			elif v.uitype=='text':
 				label=Label(self,text=v.name.replace('_',' '))
 				label.grid(row=row,column=0)
@@ -298,9 +199,9 @@ class TkVariablesWindow(Frame):
 				control=Entry(self,textvariable=tkVar)
 				tkVar.set(v.value)
 				control.grid(row=row,column=1,columnspan=2,sticky="WE")
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
 			elif v.uitype=='textarea':
 				label=Label(self,text=v.name.replace('_',' '))
 				label.grid(row=row,column=0)
@@ -311,9 +212,9 @@ class TkVariablesWindow(Frame):
 				control.delete('1.0',END)
 				control.insert('insert',v.value)
 				control.grid(row=row,column=1,columnspan=2,sticky="WE")
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
 			elif v.uitype=='time':
 				pass
 			elif v.uitype=='url':
@@ -324,9 +225,9 @@ class TkVariablesWindow(Frame):
 				control=Entry(self,textvariable=tkVar)
 				tkVar.set(v.value)
 				control.grid(row=row,column=1,columnspan=2)
-				if v.description!=None and v.description!='':
-					self.tooltips.append(ToolTip(control,v.description))
-					self.tooltips.append(ToolTip(label,v.description))
+				if v.tooltip!=None and v.tooltip!='':
+					self.tooltips.append(ToolTip(control,v.tooltip))
+					self.tooltips.append(ToolTip(label,v.tooltip))
 			else:
 				print 'ERR: Unknown or inconclusive variable type -',v.uitype
 				raise Exception()

@@ -84,7 +84,7 @@ def pilImage(img,loader=None):
 	"""
 	converts anything to a pil image
 	
-	:param a: can be a pil image or a numpy array
+	:param img: can be a pil image, loadable file path, or a numpy array
 	"""
 	if isinstance(img,Image.Image):
 		# already what we need
@@ -145,6 +145,8 @@ def isFloat(img):
 		# a single color
 		if type(img[0])==float:
 			return True
+	if type(img)==float:
+		return True
 	return False
 
 	

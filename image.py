@@ -43,7 +43,8 @@ class ImageLayer(Layer):
 			elif h in ['0','auto']:
 				h=img.height*(img.width/w)
 			img=img.resize((int(w),int(h)),Image.ANTIALIAS)
-		img.immutable=True # mark this image so that compositor will not alter it
+		if img!=None:
+			img.immutable=True # mark this image so that compositor will not alter it
 		return img
 
 	@property

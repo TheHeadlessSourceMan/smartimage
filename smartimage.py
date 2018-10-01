@@ -14,7 +14,7 @@ import os
 import zipfile
 import lxml.etree
 from layer import *
-from variable import *
+from form import Form
 from collections import OrderedDict
 from PIL import ImageDraw
 
@@ -44,14 +44,34 @@ class SmartImage(Layer):
 		self.load(filename,xmlName)
 		self.cacheRenderedLayers=True # trade memory for speed
 
+	# TODO: remove?
 	@property
 	def variables(self):
-		if self._variables==None:
-			self._variables=OrderedDict()
-			for variable in self.xml.xpath('//*/variable'):
-				variable=Variable(self,self,variable)
-				self._variables[variable.name]=variable
-		return self._variables
+		f=self.form
+		if f==None:
+			return []
+		return f.children
+		# if self._variables==None:
+			# self._variables=OrderedDict()
+			# for variable in self.xml.xpath('//*/variable'):
+				# variable=Variable(self,self,variable)
+				# self._variables[variable.name]=variable
+		# return self._variables
+		
+	@property
+	def form(self):
+		for f in self.forms:
+			if f.hidden==False:
+				return f
+		return None
+
+	@property
+	def forms(self):
+		forms=self.xml.xpath('//*/form')
+		ret=[]
+		for form in forms:
+			ret.append(Form(self,None,form))
+		return ret
 		
 	@property
 	def numPages(self):
@@ -316,8 +336,8 @@ class SmartImage(Layer):
 		if there are variables that can be edited
 		"""
 		ret=False
-		for variable in self.variables.values():
-			if variable.type!='hidden':
+		for variable in self.variables:
+			if not variable.hidden:
 				ret=True
 				break
 		return ret
@@ -432,10 +452,10 @@ if __name__ == '__main__':
 	except ImportError:
 		pass
 	printhelp=False
+	didSomething=False
 	if len(sys.argv)<2:
 		printhelp=True
 	else:
-		didSomething=False
 		didOutput=False
 		simg=None
 		for arg in sys.argv[1:]:

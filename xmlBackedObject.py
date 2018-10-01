@@ -105,6 +105,18 @@ class XmlBackedObject(object):
 			val=val[1:-1]
 		return [float(v) for v in val.split(',')]
 		
+	def _toBool(self,s):
+		s=s.lstrip()
+		return len(s)>0 and (s[0] in 'YyTt1')
+	def _getPropertyBool(self,name,default=False):
+		"""
+		gets a property returning a boolean value
+		"""
+		prop=self._getProperty(name,'').strip()
+		if prop=='':
+			return default
+		return self._toBool(prop[0])
+		
 	def _getPropertyPercent(self,name,default=1.0):
 		"""
 		gets a property, always returning a decimal percent (where 1.0 = 100%)
@@ -142,6 +154,10 @@ class XmlBackedObject(object):
 			if child.dirtyBranch:
 				return True
 		return False
+		
+	@property
+	def uitype(self):
+		return self.xml.tag
 
 	@property
 	def xml(self):

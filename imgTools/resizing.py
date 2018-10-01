@@ -29,7 +29,7 @@ def imageBorder(img,thickness,edge="#ffffff00"):
 	
 	TODO: combine into extendImageCanvas function
 	"""
-	img=pilImage(img)
+	img=imageRepr.pilImage(img)
 	if edge=='mirror':
 		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2))
 		# top
@@ -85,29 +85,29 @@ def imageBorder(img,thickness,edge="#ffffff00"):
 	elif edge=='clamp':
 		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2))
 		# top
-		fill=img.crop((0,0,img.width,1)).regetSize((img.width,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,0,img.width,1)).resize((img.width,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(thickness,0))
 		# bottom
-		fill=img.crop((0,img.height-1,img.width,img.height)).regetSize((img.width,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,img.height-1,img.width,img.height)).resize((img.width,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(thickness,img.height+thickness))
 		# left
-		fill=img.crop((0,0,1,img.height)).regetSize((thickness,img.height),resample=Image.NEAREST)
+		fill=img.crop((0,0,1,img.height)).resize((thickness,img.height),resample=Image.NEAREST)
 		newImage.paste(fill,(0,thickness))
 		# right
-		fill=img.crop((img.width-1,0,img.width,img.height)).regetSize((thickness,img.height),resample=Image.NEAREST)
+		fill=img.crop((img.width-1,0,img.width,img.height)).resize((thickness,img.height),resample=Image.NEAREST)
 		newImage.paste(fill,(img.width+thickness,thickness))
 		# TODO: corners
 		# top-left corner
-		fill=img.crop((0,0,1,1)).regetSize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,0,1,1)).resize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(0,0))
 		# top-right corner
-		fill=img.crop((img.width-1,0,img.width,1)).regetSize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((img.width-1,0,img.width,1)).resize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(img.width+thickness,0))
 		# bottom-left corner
-		fill=img.crop((0,img.height-1,1,img.height)).regetSize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((0,img.height-1,1,img.height)).resize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(0,img.height+thickness))
 		# bottom-right corner
-		fill=img.crop((img.width-1,img.height-1,img.width,img.height)).regetSize((thickness,thickness),resample=Image.NEAREST)
+		fill=img.crop((img.width-1,img.height-1,img.width,img.height)).resize((thickness,thickness),resample=Image.NEAREST)
 		newImage.paste(fill,(img.width+thickness,img.height+thickness))
 	else:
 		newImage=Image.new(img.mode,(img.size[0]+thickness*2,img.size[1]+thickness*2),edge)

@@ -1,0 +1,11 @@
+<smartimage>
+	<!-- Combine details of one image with another -->
+	<numberspace name="recombine" blendMode="add" invert="true">	
+		<numberspace space="daubechies" levels="1,*">
+			<image file="../picnic.jpg" />
+		</numberspace>
+		<numberspace space="daubechies">
+			<image file="../rice.jpg" />
+		</numberspace>
+	</numberspace>
+</smartimage>

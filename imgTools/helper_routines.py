@@ -14,21 +14,33 @@ def clampImage(img,minimum=None,maximum=None):
 	:param minimum: minimum value to clamp to (default is 0)
 	:param maximum: maximum value to clamp to (default is the maximum pixel value)
 	"""
+	if minimum==None: # assign default
+		if isFloat(img):
+			minimum=0.0
+		else:
+			minimum=0
+	elif isFloat(minimum)!=isFloat(img): # make sure it matches the image's number space
+		if isFloat(minimum):
+			minimum=int(minimum*255)
+		else:
+			minimum=minimum/255.0
+	if maximum==None: # assign default
+		if isFloat(img):
+			maximum=1.0
+		else:
+			maximum=255
+	elif isFloat(maximum)!=isFloat(img): # make sure it matches the image's number space
+		if isFloat(maximum):
+			maximum=int(maximum*255)
+		else:
+			maximum=maximum/255.0
 	if type(img)!=np.ndarray:
-		if minimum!=None and minimum!=0 and maximum!=None and maximum!=255:
+		if minimum==0 and (maximum>=255 or (maximum>=1.0 and isFloat(maximum))): # because conversion implies clamping to a valid range
 			return img
 		img=numpyArray(img)
-	if isFloat(img):
-		minval=0.0
-		maxval=1.0
-	else:
-		minval=0
-		maxval=255
-	if minimum==None:
-		minimum=minval
-	if maximum==None:
-		maximum=maxval
-	return np.where(img<minimum,minval,np.where(img>maximum,maxval,img))
+	#print img.shape,minimum,maximum
+	return np.clip(img,minimum,maximum)
+	
 	
 def normalize(img):
 	"""

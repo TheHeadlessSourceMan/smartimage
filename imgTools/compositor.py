@@ -419,7 +419,10 @@ def composite(image,overImage,opacity=1.0,blendMode='normal',mask=None,position=
 	if image==None or opacity<=0.0:
 		return overImage
 	if overImage==None:
-		size=(int(image.width+position[0]),int(image.height+position[1]))
+		if type(image)==np.ndarray:
+			size=(int(image.shape[0]+position[0]),int(image.shape[1]+position[1]))
+		else:
+			size=(int(image.width+position[0]),int(image.height+position[1]))
 		if (opacity==1.0 and mask==None and position==(0,0)) or size[0]<=0 or size[1]<=0:
 			# there is nothing to change
 			return image
@@ -498,7 +501,7 @@ if __name__ == '__main__':
 					print 'Loaded image B: '+arg
 	if printhelp:
 		print 'Usage:'
-		print '  blendModes.py image1 image2 [options]'
+		print '  compositor.py image1 image2 [options]'
 		print 'Options:'
 		print '   --opacity=1.0 ......... set the opacity of the blend'
 		print '   --blendMode=normal .... blend mode to use'

@@ -1,0 +1,19 @@
+<smartimage>
+<form caption="My Form" help="help.html">
+	<preview showBelow="false" showAbove="#ff000088" />
+	<select name="" multiple="True" textEntry="True">
+		<option caption="value 1">1</option>
+		<option caption="value 2">2</option>
+	</select>
+	<image src="" />
+	<text name="" multiline="True" caption="Your text">contents</text>
+	<color name="" alpha="false" grayscale="false">#ff0000</color>
+	<numeric name="" min="0" max="360" decimal="False" caption="angle">45</numeric>
+	<points fixedNumber="False" preview="True" rectangle="True">
+		<point name="p1" />
+		<point name="p2" />
+		<point name="p3" />
+		<point name="p4" />
+	</points>
+</form>
+</smartimage>
