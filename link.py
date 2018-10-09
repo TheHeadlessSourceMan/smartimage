@@ -17,13 +17,23 @@ class Link(Layer):
 
 	@property
 	def ref(self):
+		"""
+		get the reference
+		"""
 		return self.xml.attrib['ref']
 	@ref.setter
 	def ref(self,ref):
+		"""
+		set the reference
+		"""
 		self.xml.attrib['ref']=ref
 		self.docRoot.dirty=True
 
 	def _getProperty(self,name,default=None):
+		"""
+		override _getProperty so that when somebody uses this object
+		they get the property of the one it is linked to instead
+		"""
 		if name in self.xml.attrib:
 			val=self.xml.attrib[name]
 		else:
@@ -32,14 +42,20 @@ class Link(Layer):
 
 	@property
 	def target(self):
-		if self._target==None:
+		"""
+		the target to link to
+		"""
+		if self._target is None:
 			self._target=self.parent.getLayer(self.ref)
-			if self._target==None:
+			if self._target is None:
 				raise Exception('ERR: broken link to layer '+str(self.ref))
 		return self._target
 
 	@property
 	def image(self):
+		"""
+		get the image for this layer
+		"""
 		img=self.target.image
 		w=self._getProperty('w','auto')
 		h=self._getProperty('h','auto')

@@ -6,8 +6,6 @@ The base class for image layers
 from PIL import Image
 from imgTools import *
 from xmlBackedObject import *
-from imgTools import *
-import math
 
 
 class RenderingContext(object):
@@ -22,17 +20,26 @@ class RenderingContext(object):
 		self.cur_image=None
 		self.visitedLayers={}
 		self.variableContexts=[] # an array of dicts
-		
+
 	def getVariableValue(self,name):
+		"""
+		get the current value of a variable
+		"""
 		for contextId in range(len(self.variableContexts),0):
 			if name in variableContexts[contextId]:
 				return variableContexts[contextId][name]
 		return None
-		
+
 	def setVariableValue(self,name,value):
+		"""
+		set the current value of a variable
+		"""
 		self.variableContexts[-1][name]=value
 
 	def log(self,*vals):
+		"""
+		write something to the rendering debug log
+		"""
 		print (' '*len(self.visitedLayers))+(' '.join([str(v) for v in vals]))
 
 	def _setLocation(self,x,y,absolute=False):
@@ -64,7 +71,7 @@ class RenderingContext(object):
 		self.variableContexts.append({})
 		# do we need to do anything?
 		opacity=layer.opacity
-		if opacity<=0.0 or layer.visible==False:
+		if opacity<=0.0 or not layer.visible:
 			self.log('skipping',layer.name)
 			del self.visitedLayers[layer]
 			return None
@@ -85,7 +92,7 @@ class RenderingContext(object):
 			image=extendImageCanvas(image,bounds)
 			image=image.rotate(layer.rotate)
 		# logging
-		if image==None:
+		if image is None:
 			self.log('info',layer.name,'NULL IMAGE')
 		else:
 			self.log('info',layer.name,'mode='+image.mode,'bounds='+str((0,0,image.width,image.height)))
@@ -102,16 +109,20 @@ class Layer(XmlBackedObject,PilPlusImage):
 	"""
 	def __init__(self,docRoot,parent,xml):
 		XmlBackedObject.__init__(self,docRoot,parent,xml)
+		PilPlusImage.__init__(self)
 		self.parent=parent
 		self._lastRenderedImage=None
 
 	def __repr__(self):
 		name=self.name
-		if len(name)>0:
+		if name:
 			return 'Layer '+str(self.id)+' - "'+name+'"'
 		return 'Layer '+str(self.id)
 
 	def getLayer(self,id):
+		"""
+		fetch a layer with the given id
+		"""
 		l=None
 		if self.id==id:
 			l=self
@@ -130,7 +141,7 @@ class Layer(XmlBackedObject,PilPlusImage):
 		x=self._getProperty('x','auto')
 		if x=='auto':
 			x=[child.x for child in self.children]
-			if len(x)>0:
+			if x:
 				x=min(x)
 			else:
 				x=0
@@ -147,7 +158,7 @@ class Layer(XmlBackedObject,PilPlusImage):
 		y=self._getProperty('y','auto')
 		if y=='auto':
 			y=[child.y for child in self.children]
-			if len(y)>0:
+			if y:
 				y=min(y)
 			else:
 				y=0
@@ -158,9 +169,12 @@ class Layer(XmlBackedObject,PilPlusImage):
 		return y
 	@property
 	def w(self):
+		"""
+		the current width
+		"""
 		w=self._getProperty('w','auto')
 		if w in ['0','auto']:
-			if len(self.children)>0:
+			if self.children:
 				w=[child.x+child.w for child in self.children]
 				w=max(w)-self.x
 			else:
@@ -170,9 +184,12 @@ class Layer(XmlBackedObject,PilPlusImage):
 		return w
 	@property
 	def h(self):
+		"""
+		the current height
+		"""
 		h=self._getProperty('h','auto')
 		if h in ['0','auto']:
-			if len(self.children)>0:
+			if self.children:
 				h=[child.y+child.h for child in self.children]
 				h=max(h)-self.y
 			else:
@@ -183,34 +200,57 @@ class Layer(XmlBackedObject,PilPlusImage):
 
 	@property
 	def visible(self):
+		"""
+		is the layer visible (akin to the eyeball tool in an image editor)
+		"""
 		return self._getProperty('visible','y')[0] in ['y','Y','t','T','1']
-		
+
 	@property
 	def detatched(self):
+		"""
+		Detatch the layer from the rendering order
+
+		TODO: I think this is going away
+		"""
 		return self._getProperty('detatched','n')[0] in ['y','Y','t','T','1']
-		
+
 	@property
 	def crop(self):
+		"""
+		crop the layer
+		"""
 		return self._getPropertyArray('crop',None)
 
 	@property
 	def rotate(self):
+		"""
+		rotate the layer
+		"""
 		return float(self._getProperty('rotate','0'))
-		
+
 	@property
 	def relativeTo(self):
+		"""
+		set the frame of reference for sizing, moving, etc
+		"""
 		# TODO: dimensions need to account for this!
 		return self._getProperty('relativeTo','parent')
 
 	@property
 	def name(self):
+		"""
+		the friendly, viewable name of this layer
+		"""
 		ret=self._getProperty('name')
-		if ret==None:
+		if ret is None:
 			ret='Layer '+str(self.id)
 		return ret
 
 	@property
 	def opacity(self):
+		"""
+		the overall opacity of this layer
+		"""
 		return self._getPropertyPercent('opacity',1.0)
 
 	@property
@@ -222,6 +262,9 @@ class Layer(XmlBackedObject,PilPlusImage):
 		return self._getProperty('blendMode','normal')
 
 	def _createChild(self,doc,parent,xml):
+		"""
+		create a child layer
+		"""
 		child=None
 		if xml==self.xml or xml.__class__.__name__ in ['_Comment']:
 			pass
@@ -267,8 +310,9 @@ class Layer(XmlBackedObject,PilPlusImage):
 	@property
 	def children(self):
 		"""
+		all of the children of the layer
 		"""
-		if self._children==None:
+		if self._children is None:
 			self._children=[]
 			# NOTE: this loop is reversed so that the xml file has top layers first
 			# (visually on top in an editor) like what we're used to in a gui like GIMP.
@@ -286,28 +330,33 @@ class Layer(XmlBackedObject,PilPlusImage):
 		#return Image.new('L',(int(self.w),int(self.h)),0)
 		ref=self._getProperty('roi')
 		return self.docRoot.imageByRef(ref)
-		
+
 	@property
 	def normalMap(self):
 		"""
 		A 3d normal map, wherein red=X, green=Y, blue=Z (facing directly out from the screen)
 		"""
 		ref=self._getProperty('normalMap',None)
-		if ref==None:
+		if ref is None:
 			ref=normalMapFromImage(self.image)
 		return self.docRoot.imageByRef(ref)
-		
+
 	@property
 	def bumpMap(self):
 		"""
 		a grayscale bump map or heightmap.
 		"""
 		ref=self._getProperty('bumpMap',None)
-		if ref==None:
+		if ref is None:
 			ref=heightMapFromNormalMap(self.normalMap)
 		return self.docRoot.imageByRef(ref)
-		
+
 	def compareOutput(self,compareTo,tolerance=0.99999):
+		"""
+		determine if the output of this layer matches an image
+
+  		this is used mainly for testing
+		"""
 		rendered=self.renderImage()
 		return compareImage(rendered,compareTo,tolerance)
 
@@ -345,9 +394,9 @@ class Layer(XmlBackedObject,PilPlusImage):
 
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
-		if self.docRoot.cacheRenderedLayers and self.dirtyBranch==False and self._lastRenderedImage!=None:
+		if self.docRoot.cacheRenderedLayers and not self.dirtyBranch and self._lastRenderedImage is not None:
 			return self._lastRenderedImage
-		if renderContext==None:
+		if renderContext is None:
 			renderContext=RenderingContext(self)
 		ret=renderContext.renderImage(self)
 		if self.docRoot.cacheRenderedLayers:

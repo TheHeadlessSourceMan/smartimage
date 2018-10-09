@@ -3,9 +3,17 @@
 """
 Contains routines to convolve an image
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
+import scipy
+from scipy import ndimage
 from imageRepr import *
 from resizing import *
-from scipy import ndimage
 
 
 CONVOLVE_MATTRICES={
@@ -40,7 +48,7 @@ CONVOLVE_MATTRICES={
 def directionalBlur(img,size=15):
 	"""
 	blur in a given direction
-	
+
 	https://www.packtpub.com/mapt/book/application_development/9781785283932/2/ch02lvl1sec21/motion-blur#!
 	"""
 	oSize=img.shape
@@ -51,54 +59,54 @@ def directionalBlur(img,size=15):
 	d=(img.shape[0]-oSize[0])/2,(img.shape[1]-oSize[1])/2
 	img=img[d[0]:-d[0],d[1]:-d[1]]
 	return img
-	
+
 
 def circularBlur(img):
 	"""
 	blur in a radial manner
-	
+
 	http://chemaguerra.com/circular-radial-blur/
 	"""
 	import numberSpaces
 	polar=numberSpaces.cartesian2polar(img)
 	polar=convolve(polar,'xblur')
 	return numberSpaces.polar2cartesian(polar)
-	
-	
+
+
 def zoomBlur(img):
 	"""
 	blur in a zoom manner
-	
+
 	http://chemaguerra.com/circular-radial-blur/
 	"""
 	import numberSpaces
 	polar=numberSpaces.cartesian2polar(img)
 	polar=convolve(polar,'yblur')
 	return numberSpaces.polar2cartesian(polar)
-	
+
 
 def streak(img,size=15):
 	"""
 	The idea is to cause streaks in a given direction.
-	
+
 	TODO: not working
 	"""
 	return img+directionalBlur(highlights(img,.95),size)
-	
-	
+
+
 def convolve(img,matrix,add=0,divide=1,edge='clamp'):
 	"""
 	run a given convolution matrix
-	
+
 	:param matrix: can be a numerical matrix or an entry in CONVOLVE_MATTRICES
 	"""
-	if type(matrix) in [str,unicode]:
+	if isinstance(matrix,basestring):
 		if matrix.find(',')>0:
 			matrix=''.join(matrix.split())
 			if matrix.startswith('[['):
 				matrix=matrix[1:-1]
 			matrix=[[float(col) for col in row.split(',')] for row in matrix[1:-1].replace('],','').split('[')]
-		else:		
+		else:
 			matrix=CONVOLVE_MATTRICES[matrix]
 	size=len(matrix)
 	border=size/2-1
@@ -115,7 +123,7 @@ def convolve(img,matrix,add=0,divide=1,edge='clamp'):
 		img=ndimage.convolve(img,matrix)
 	return img
 
-	
+
 if __name__ == '__main__':
 	import sys
 	# Use the Psyco python accelerator if available

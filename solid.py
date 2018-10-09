@@ -5,7 +5,6 @@ This is a layer of a solid color (same nomenclature as Adobe AfterEffects)
 """
 from layer import *
 from imgTools import *
-import struct
 
 
 class Solid(Layer):
@@ -18,6 +17,9 @@ class Solid(Layer):
 
 	@property
 	def color(self):
+		"""
+		get the background color
+		"""
 		return self._getProperty('color','#ff00ff')
 
 	@property
@@ -28,7 +30,7 @@ class Solid(Layer):
 			#FFFFFFFF
 			rgb(128,12,23)
 			rgba(234,33,23,0)
-			
+
 		If self.color is not specified, return [255,255,255,0]
 		"""
 		return strToColor(self.color,False,[255,255,255,0])

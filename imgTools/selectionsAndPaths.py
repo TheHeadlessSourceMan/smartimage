@@ -1,23 +1,30 @@
-from helper_routines import *
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 import scipy.ndimage
-from colors import *
 from PIL import Image, ImageDraw
+from colors import *
+from helper_routines import *
 
-	
+
 def colorToStr(c):
 	"""
 	convert a color array to a html string
-	
+
 	:param c: an rgba[] in 0-255
-	
+
 	:returns: an html color string
 	"""
-	if (type(c)==tuple) or (type(c)==list and type(c[0])==list) or (type(c)==np.ndarray and len(c.shape)>1):
+	if isinsatance(c,tuple) or (isinstance(c,list) and isinstance(c[0],list)) or (isinstance(c,np.ndarray) and len(c.shape)>1):
 		colors=[]
 		for cx in c:
 			colors.append(colorToStr(cx))
 		return colors
-	if type(c[0])!=int:
+	if isinstance(c[0],int):
 		c=c*255.0
 	if len(c)==1:
 		return '#%02X'%c[0]
@@ -27,16 +34,16 @@ def colorToStr(c):
 		return 'rgba(%d,%d,%d,%f)'%(c[0],c[1],c[2],c[3]/255)
 	raise Exception('Bogus color string:',c)
 
-	
+
 def pickColor(img,location,pickMode='average'):
 	"""
 	pick a color at a given location
-	
+
 	:param img: can be a pil image, numpy array, etc
 	:param location: can be a single point or an [x,y,w,h] to average
 	:param pickMode: what to do with multiple pixels
 		choices are average,range,or all
-	:return: 
+	:return:
 		if a single point or "average", return one color
 		if "range" return (minColor,maxColor)
 		if "all" return [all colors]
@@ -58,8 +65,8 @@ def pickColor(img,location,pickMode='average'):
 			ret=region.reshape(-1,region.shape[-1])
 			ret=np.unique(ret,axis=0)
 	return ret
-	
-	
+
+
 def matchColorToImage(color,img):
 	"""
 	match the color to the image mode
@@ -67,9 +74,9 @@ def matchColorToImage(color,img):
 	imgChan=img.shape[-1]
 	if type(color) in [float,int]:
 		if isFloat(img):
-			if type(color)!=float:
+			if isinstance(color,int):
 				color=color/255.0
-		elif type(color)!=int:
+		elif isinstance(color,int):
 			color=int(color*255)
 	else:
 		colChan=len(color)
@@ -85,8 +92,8 @@ def matchColorToImage(color,img):
 			else:
 				color=np.int(np.array(color)*255)
 	return color
-	
-	
+
+
 def selectByColor(img,color,tolerance=0,soften=10,smartSoften=True,colorspace='RGB'):
 	"""
 	Select all pixels of a given color
@@ -101,22 +108,22 @@ def selectByColor(img,color,tolerance=0,soften=10,smartSoften=True,colorspace='R
 	:param soften: apply a soften radius to the edges of the selection
 	:param smartSoften: multiply the soften radius by how near the pixel is to the selection color
 	:param colorspace: change the given img (assumed to be RGB) into another corlorspace before matching
-	
+
 	:returns: black and white image in a numpy array (usable as a selection or a mask)
 	"""
 	img=numpyArray(img)
 	img=changeColorspace(img)
-	if (type(color)==list and type(color[0])==list) or (type(color)==np.ndarray and len(color.shape)>1):
+	if (isinstance(color,list) and isinstance(color[0],list)) or (isinstance(color,np.ndarray) and len(color.shape)>1):
 		# there are multiple colors, so select them all one at a time
 		# TODO: this could possibly be made faster with array operations??
 		ret=None
 		for c in color:
-			if type(ret)==type(None):
+			if ret is None:
 				ret=selectByColor(img,c,tolerance,soften,smartSoften)
 			else:
 				ret=ret+selectByColor(img,c,tolerance,soften,smartSoften)
 		ret=clampImage(ret)
-	elif type(color)==tuple:
+	elif isinstance(color,tuple):
 		# color range - select all colors "between" these two in the given color space
 		color=(matchColorToImage(color[0],img),matchColorToImage(color[1],img))
 		matches=np.logical_and(img>=color[0],img<=color[1])
@@ -138,8 +145,8 @@ def selectByColor(img,color,tolerance=0,soften=10,smartSoften=True,colorspace='R
 			if smartSoften:
 				ret=np.minimum(imax,ret/avgDelta)
 	return ret
-	
-	
+
+
 def selectByPoint(img,location,tolerance=0,soften=10,smartSoften=True,colorspace='RGB',pickMode='average'):
 	"""
 	Works like the "magic wand" selection tool.
@@ -152,12 +159,13 @@ def selectByPoint(img,location,tolerance=0,soften=10,smartSoften=True,colorspace
 	:param soften: apply a soften radius to the edges of the selection
 	:param smartSoften: multiply the soften radius by how near the pixel is to the selection color
 	:param colorspace: change the given img (assumed to be RGB) into another corlorspace before matching
-	
+		TODO: implement this!
+
 	:returns: black and white image in a numpy array (usable as a selection or a mask)
 	"""
 	img=numpyArray(img)
 	img=changeColorspace(img)
-	# selectByColor, but the 
+	# selectByColor, but the
 	selection=selectByColor(img,pickColor(img,location,pickMode),tolerance,soften,smartSoften,colorspace=imageMode(img))
 	# now identify islands from selection
 	labels,_=scipy.ndimage.label(selection)
@@ -169,22 +177,22 @@ def selectByPoint(img,location,tolerance=0,soften=10,smartSoften=True,colorspace
 	# only keep portions of selection within our islands
 	selection=np.where(np.isin(labels,labelsInSel),selection,0.0)
 	return selection
-	
-	
+
+
 def gaussianBlur(img,sizeX,sizeY=None,edge='clamp'):
 	"""
 	perform a gaussian blur on an image
-	
+
 	:param img: can be a pil image, numpy array, etc
 	:param sizeX: the x radius of the blur
 	:param sizeY: the y radius of the blur (if None, use same as X)
-	:param edge: what to do for more pixels when we reach an edge 
-		can be: "clamp","mirror","wrap", or a color 
+	:param edge: what to do for more pixels when we reach an edge
+		can be: "clamp","mirror","wrap", or a color
 		default is "clamp"
-	
+
 	:returns: image in a numpy array
 	"""
-	if sizeY==None:
+	if sizeY is None:
 		sizeY=sizeX
 	if edge=='clamp':
 		mode='nearest'
@@ -207,19 +215,19 @@ def morphology(func,img,amount,edge='clamp',shape=None):
 	"""
 	perform a morphological operation on an image
 		"open","close","dilate",or "erode"
-	
+
 	For a definition of what those things mean:
 		https://en.wikipedia.org/wiki/Mathematical_morphology
-	
+
 	:param func: morphological function to perform
 	:param img: can be a pil image, numpy array, etc
 	:param amount: how wide in pixels the operator is
-	:param edge: what to do for more pixels when we reach an edge 
-		can be: "clamp","mirror","wrap", or a color 
+	:param edge: what to do for more pixels when we reach an edge
+		can be: "clamp","mirror","wrap", or a color
 		default is "clamp"
 	:param shape: a b+w shape to sweep along the img outline
 		disables amount value
-	
+
 	:returns: image in a numpy array
 	"""
 	if edge=='clamp':
@@ -263,16 +271,16 @@ def morphology(func,img,amount,edge='clamp',shape=None):
 		img=scipy.ndimage.black_tophat(img,(amount),shape,mode=mode,cval=cval)
 	return img
 
-	
+
 def selectionToPath(img,midpoint=0.5):
 	"""
 	convert a black and white selection (or mask) into a path
-	
+
 	:param img: a pil image, numpy array, etc
 	:param midpoint: for grayscale images, this is the cuttoff point for yes/no
-	
+
 	:return: a closed polygon [(x,y)]
-	
+
 	TODO: I resize the image to give laplace a border to lock onto, but
 		do I need to scale the points back down again??
 	"""
@@ -285,7 +293,7 @@ def selectionToPath(img,midpoint=0.5):
 	# convert to a nice point-pair representation
 	points=[(point[1],point[0]) for point in points]
 	return points
-	
+
 def pathToSelection(path,filled=True,outlineWidth=0):
 	"""
 	by using fill=False and outlineWidth=n you can create a border selection
@@ -299,14 +307,17 @@ def pathToSelection(path,filled=True,outlineWidth=0):
 	else:
 		backgroundColor=0
 	return renderPath(path,None,1,borderColor,backgroundColor)
-	
+
 def renderPath(path,intoImg=None,borderSize=1,borderColor=None,backgroundColor=None):
 	"""
 	render a path into an image
-	
+
 	:param intoImg: if not specified, a new one will be created
+	:param borderSize: how thick the border is (TODO: still need to implement)
+	:param borderColor: color of the border
+	:param backgroundColor: color of the background
 	"""
-	if intoImg==None:
+	if intoImg is None:
 		w=0
 		h=0
 		for pt in path:
@@ -315,14 +326,14 @@ def renderPath(path,intoImg=None,borderSize=1,borderColor=None,backgroundColor=N
 			if pt[1]>h:
 				h=pt[1]
 		intoImg=Image.new('L',(w,h),0)
-		if borderColor==None:
+		if borderColor is None:
 			borderColor=1
-		if backgroundColor==None:
+		if backgroundColor is None:
 			backgroundColor=0
 	else:
-		if borderColor==None:
+		if borderColor is None:
 			borderColor=(255,0,0,128)
-		if backgroundColor==None:
+		if backgroundColor is None:
 			backgroundColor=(255,0,0,128)
 	ImageDraw.Draw(intoImg).polygon(path,outline=borderColor,fill=backgroundColor)
 	return intoImg
@@ -331,24 +342,24 @@ def skin(img):
 	"""
 	sample color selection
 	returns a skintone mask
-	
+
 	This is a match on HS colorspace, which, against popular rumor, performs better than other color spaces.
 		"Color Space for Skin Detection - A Review"
-			by Nikhil Rasiwasia, 
+			by Nikhil Rasiwasia,
 			Fondazione Graphitech,
 			University of Trento, (TN) Italy
 		"Comparison  of  Five  Color  Models  in  Skin  Pixel  Classification"
 			by Benjamin D. Zarit, Boaz J. Super, Francis K. H. Quek
 			Electrical Engineering and Computer Science
 			University of Illinois at Chicago
-	
+
 	:param img: image to match
 	:return: a black and white mask
-	
+
 	TODO: doesn't work :P
 	"""
 	return selectByColor(img,((0,48,80),(20,255,255)),colorspace='HSV')
-	
+
 
 #------------------ main entry point for external fun
 
@@ -372,6 +383,7 @@ if __name__ == '__main__':
 		soften=0
 		smartSoften=True
 		pickMode='average'
+		img=None
 		for arg in sys.argv[1:]:
 			if arg.startswith('-'):
 				arg=[a.strip() for a in arg.split('=',1)]

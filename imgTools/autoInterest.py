@@ -18,14 +18,14 @@ try:
 except ImportError:
 	has_opencv=False
 
-	
+
 def skin(image):
 	"""
 	use opencv to try and detect human skin in the image
-	
+
 	returns b&w image where white=interesting, black=uninteresting
 	"""
-	if has_opencv==False:
+	if not has_opencv:
 		return None
 	# Constants for finding range of skin color in YCrCb
 	min_YCrCb = np.array([0,133,77],np.uint8)
@@ -37,19 +37,19 @@ def skin(image):
 	# convert to image
 	outImage=Image.fromarray(np.uint8(skinRegion))
 	return outImage
-	
-	
+
+
 def faces(image):
 	"""
 	use opencv to try and detect human faces - especially eyes in the image
-	
+
 	see also:
 		https://docs.opencv.org/trunk/d7/d8b/tutorial_py_face_detection.html
 		https://shahsparx.me/opencv-eye-detection-glasses-opencv/
-	
+
 	returns b&w image where white=interesting, black=uninteresting
 	"""
-	if has_opencv==False:
+	if not has_opencv:
 		return None
 	outImage=Image.new('L',image.size,0)
 	draw=ImageDraw.Draw(outImage)
@@ -68,12 +68,12 @@ def faces(image):
 			#eye_gray = gray[ey:ey+eh, ex:ex+ew]
 			draw.ellipse((x+ex,y+ey,x+ex+ew,y+ey+eh),fill=255)
 	return outImage
-	
-		
+
+
 def highContrast(image):
 	"""
 	get interest based on very bright or very dark areas
-	
+
 	returns b&w image where white=interesting, black=uninteresting
 	"""
 	img=image.convert('L')
@@ -81,16 +81,16 @@ def highContrast(image):
 	mid=Image.new('L',img.size,128)
 	img=ImageChops.add_modulo(img,mid)
 	return ImageOps.equalize(img)
-			
-			
+
+
 def interest(image):
 	"""
 	get regions of interest in the image
-	
+
 	returns b&w image where white=interesting, black=uninteresting
 	"""
 	program=[] # (weight, function)
-	if has_opencv==False:
+	if not has_opencv:
 		print 'WARN: Attempting auto-detection of regions of interest.'
 		print '      This works A LOT better with OpenCV installed.'
 		print '      try: pip install opencv-contrib-python'
@@ -115,7 +115,7 @@ def interest(image):
 			contrastAdjustment.enhance(weight)
 		outImage=ImageChops.add(outImage,im)
 	return outImage
-		
+
 
 if __name__ == '__main__':
 	import sys

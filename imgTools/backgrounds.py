@@ -9,7 +9,7 @@ from PIL import Image, ImageOps
 def checkerboard(w,h,color1=(102,102,102),color2=(153,153,153),squareSize=8):
 	"""
 	create an image based on checkerboard of two colors
-	
+
 	default is a "transparent" checkerboard background image ala image editors
 	"""
 	l1,l2=len(color1),len(color2)
@@ -17,7 +17,7 @@ def checkerboard(w,h,color1=(102,102,102),color2=(153,153,153),squareSize=8):
 		if l1<l2:
 			c=[]
 			c.extend(color1)
-			for l in range(l2-l1):
+			for l in range(len(l2-l1)):
 				c.append('255')
 			color1=(ch for ch in c)
 			l1=l2
@@ -49,12 +49,12 @@ def checkerboard(w,h,color1=(102,102,102),color2=(153,153,153),squareSize=8):
 				img.paste(square,(int(x),int(y)))
 			even=True
 	return img
-	
-	
+
+
 def blinds(w,h,orientation='horizontal',color1=(0,0,0,255),color2=(0,0,0,0),thickness=1):
 	"""
 	create an image based on lines of two colors
-	
+
 	default is 1pixel black lines, transparent background
 	"""
 	if orientation=='vertical':
@@ -66,21 +66,22 @@ def blinds(w,h,orientation='horizontal',color1=(0,0,0,255),color2=(0,0,0,0),thic
 		for y in range(0,h,thickness*2):
 			img.paste(square,(0,int(y)))
 	return img
-	
-	
+
+
 def tile1d(w,tileImg,mode='repeat'):
 	"""
 	mode: 'repeat' 'once' 'stretch' 'repeat_flip'
 	"""
 	if mode=='repeat':
 		img=Image.new(tileImg.mode,(int(w),tileImg.height))
-		for x in range(0,w,tileimg.width):
+		for x in range(0,w,tileImg.width):
 			img.paste(tileImg,(int(x),0))
 	elif mode=='repeat_flip':
 		img=Image.new(tileImg.mode,(int(w),tileImg.height))
 		mirrored=ImageOps.mirror(tileImg)
 		even=True
-		for x in range(0,w,tileimg.width):
+		y=0
+		for x in range(0,w,tileImg.width):
 			if even:
 				img.paste(tileImg,(int(x),int(y)))
 				even=False
@@ -96,8 +97,8 @@ def tile1d(w,tileImg,mode='repeat'):
 	else:
 		raise Exception('ERR: unknown image repeat mode "'+mode+'"')
 	return img
-		
-	
+
+
 def tile(w,h,tileImg,xMode='repeat',yMode='repeat'):
 	"""
 	xMode: 'repeat' 'once' 'stretch' 'repeat_flip'
@@ -108,7 +109,7 @@ def tile(w,h,tileImg,xMode='repeat',yMode='repeat'):
 	tileImg.rotate(-90)
 	tileImg=tile1d(w,tileImg,mode=xMode)
 	return tileImg
-	
+
 
 if __name__ == '__main__':
 	import sys

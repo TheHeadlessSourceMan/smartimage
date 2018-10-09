@@ -8,16 +8,26 @@ from image import ImageLayer
 
 
 class FormElement(XmlBackedObject):
+	"""
+	common root for any element within a form
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		XmlBackedObject.__init__(self,docRoot,parent,xml)
 		self._value=None
-		
+
 	@property
 	def name(self):
+		"""
+		the name of the form element
+		"""
 		return self._getProperty('name')
-		
+
 	@property
 	def caption(self):
+		"""
+		the caption of the form element
+		"""
 		ret=self._getProperty('caption')
 		if ret!='':
 			return ret
@@ -26,43 +36,51 @@ class FormElement(XmlBackedObject):
 			return ret
 		ret=self._getProperty('id')
 		return ret
-		
-	@property
-	def name(self):
-		return self._getProperty('name')
-		
+
 	@property
 	def tooltip(self):
+		"""
+		a popup tooltip for this form element
+		"""
 		return self._getProperty('tooltip','')
-		
+
 	@property
 	def hidden(self):
+		"""
+		if this element is hidden or not
+		"""
 		return self._getPropertyBool('hidden')
-		
+
 	@property
 	def value(self):
-		if self._value==None:
+		"""
+		the value of this element
+		"""
+		if self._value is None:
 			self._value=self._getProperty('value')
-			if self._value==None:
+			if self._value is None:
 				self._value=self.text
 		return self._value
 	@value.setter
 	def value(self,value):
+		"""
+		set the value of this element
+		"""
 		self._value=value
-		
+
 	def __int__(self):
 		return int(self.value)
-		
+
 	def __float__(self):
 		return float(self.value)
-		
-	def __repr__(self):
-		return str(self.value)
-		
+
 	def __bool__(self):
 		return self._toBool(self.__repr__())
-		
+
 	def _createChild(self,doc,parent,xml):
+		"""
+		create a child form element
+		"""
 		child=None
 		if xml==self.xml or xml.__class__.__name__ in ['_Comment']:
 			pass
@@ -73,36 +91,47 @@ class FormElement(XmlBackedObject):
 	@property
 	def children(self):
 		"""
+		list the child form elements
 		"""
-		if self._children==None:
+		if self._children is None:
 			self._children=[]
 			for tag in [c for c in self.xml.iterchildren()]:
 				child=self._createChild(self.docRoot,self,tag)
 				if child!=None:
 					self._children.append(child)
 		return self._children
-		
+
 	def __repr__(self):
 		ret=[self.__class__.__name__]
 		for k,v in self.__class__.__dict__.items():
-			if k[0]!='_' and k not in ['parent','docRoot','xml','points'] and type(v)==property:
+			if k[0]!='_' and k not in ['parent','docRoot','xml','points'] and isinstance(v,property):
 				ret.append(str(k)+'='+str(v.fget(self)))
 		for ch in self.children:
 			ret.extend(str(ch).split('\n'))
 		return '\n\t'.join(ret)
-			
-		
-		
+
+
+
 class Form(FormElement):
+	"""
+	A form
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		if docRoot==None:
 			docRoot=self
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	def getNextId(self):
-		return 0 # TODO
-		
+		"""
+		get the next unused id
+		"""
+		return 0 # TODO: implement this
+
 	def _createChild(self,doc,parent,xml):
+		"""
+		create a child form element
+		"""
 		child=None
 		if xml==self.xml or xml.__class__.__name__ in ['_Comment']:
 			pass
@@ -125,59 +154,101 @@ class Form(FormElement):
 		else:
 			raise Exception('ERR: unknown element, "'+xml.tag+'"')
 		return child
-		
+
 	@property
 	def help(self):
+		"""
+		return the html help address
+		(possibly within the smartimage)
+		"""
 		return self._getProperty('help')
-	
+
+
 class Preview(FormElement):
+	"""
+	a form element for an image previewer
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	@property
 	def showAbove(self):
+		"""
+		should show the layers on top of this layer in the preview
+		"""
 		return self._getPropertyBool('showAbove')
-		
+
 	@property
 	def showBelow(self):
+		"""
+		should show the layers below this layer in the preview
+		"""
 		return self._getPropertyBool('showBelow')
-	
+
 class Text(FormElement):
+	"""
+	a text entry form element
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	@property
 	def multiline(self):
+		"""
+		can the user enter multiple lines of text
+		"""
 		return self._getPropertyBool('multiline')
-	
+
 class Numeric(FormElement):
+	"""
+	a numeric form control
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	@property
 	def min(self):
+		"""
+		the minimum allowed value
+		"""
 		ret=self._getProperty('min')
 		if ret!=None:
 			ret=float(ret)
 		return ret
-		
+
 	@property
 	def max(self):
+		"""
+		the maximum allowed value
+		"""
 		ret=self._getProperty('max')
 		if ret!=None:
 			ret=float(ret)
 		return ret
-		
+
 	@property
 	def decimal(self):
+		"""
+		whether or not decimals are allowed
+		"""
 		return self._getPropertyBool('decimal',True)
-		
-		
+
+
 class Select(FormElement):
+	"""
+	an item selection form element
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	def _createChild(self,doc,parent,xml):
+		"""
+		the only child elements allowed are option form elements
+		"""
 		child=None
 		if xml==self.xml or xml.__class__.__name__ in ['_Comment']:
 			pass
@@ -186,39 +257,66 @@ class Select(FormElement):
 		else:
 			raise Exception('ERR: unknown element, "'+xml.tag+'"')
 		return child
-		
+
 	@property
 	def multiple(self):
+		"""
+		if multiple selections are allowed
+		"""
 		return self._getPropertyBool('multiple')
-		
+
 	@property
 	def textEntry(self):
+		"""
+		if freeform text entry is also allowed
+		"""
 		return self._getPropertyBool('textEntry')
-		
-		
+
+
 class Option(FormElement):
+	"""
+	a single option within a selection
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
-		
+
+
 class Color(FormElement):
+	"""
+	A color selector/picker form element
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	@property
 	def alpha(self):
+		"""
+		Also want to get an alpha value
+		"""
 		return self._getPropertyBool('alpha')
-		
+
 	@property
 	def grayscale(self):
+		"""
+		Grayscale only colors
+		"""
 		return self._getPropertyBool('grayscale')
-		
-		
+
+
 class Points(FormElement):
+	"""
+	A container form element for a group of points.
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	def _createChild(self,doc,parent,xml):
+		"""
+		the child elements are all points (duh)
+		"""
 		child=None
 		if xml==self.xml or xml.__class__.__name__ in ['_Comment']:
 			pass
@@ -227,24 +325,36 @@ class Points(FormElement):
 		else:
 			raise Exception('ERR: unknown element, "'+xml.tag+'"')
 		return child
-		
+
 	@property
 	def fixedNumber(self):
+		"""
+		If there are a fixed number of points as opposed to
+		the user being able to add as many as they want.
+		"""
 		if self.rectangle:
 			return True
 		return self._getPropertyBool('fixedNumber',True)
-		
+
 	@property
 	def preview(self):
+		"""
+		Show/move points in the current preview element
+		"""
 		return self._getPropertyBool('preview')
-		
+
 	@property
 	def rectangle(self):
+		"""
+		The display idiom is to snap points to a rectangle
+		"""
 		return self._getPropertyBool('rectangle')
-		
+
 	@property
 	def points(self):
-		ret=self.children
+		"""
+		get at the contained point values
+		"""
 		if self.rectangle:
 			np=len(self.children)
 			if np<1: # requires two points, so create them
@@ -253,31 +363,48 @@ class Points(FormElement):
 			elif np<2: # requires two points, so create another
 				self.children.append(Point(self.docRoot,self,'<point value="-1,-1" />'))
 		return self.children[0:2]
-		
-		
+
+
 class Point(FormElement):
+	"""
+	A form element to hold a single x,y point
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		FormElement.__init__(self,docRoot,parent,xml)
-		
+
 	@property
 	def preview(self):
+		"""
+		display/move the poit on the current image preview
+		"""
 		default=False
-		if type(self.parent)==Points:
+		if isinstance(self.parent,Points):
 			default=self.parent.preview
 		return self._getPropertyBool('preview',default)
-		
+
 	@property
 	def center(self):
+		"""
+		hint the ui to draw the point as a rotation/center point for something
+		"""
 		return self._getPropertyBool('center')
-		
-		
+
+
 class Image(ImageLayer,FormElement):
+	"""
+	an image file loader form element
+	"""
+
 	def __init__(self,docRoot,parent,xml):
 		ImageLayer.__init__(self,docRoot,parent,xml)
 		FormElement.__init__(self,docRoot,parent,xml)
-		
-		
+
+
 def loadForms(filename):
+	"""
+	Utility to load the forms from a smartimage
+	"""
 	import os
 	ext=filename.rsplit('.',1)[-1]
 	if os.path.isdir(filename):
@@ -295,7 +422,8 @@ def loadForms(filename):
 	for form in forms:
 		ret.append(Form(None,None,form))
 	return ret
-		
+
+
 if __name__ == '__main__':
 	import sys
 	# Use the Psyco python accelerator if available

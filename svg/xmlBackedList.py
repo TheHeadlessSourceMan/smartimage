@@ -21,7 +21,7 @@ class XmlBackedList:
 		
 	@property
 	def _list(self):
-		if self._actualList==None:
+		if self._actualList is None:
 			self._actualList=[]
 			for item in self.doc.xpath(self.xpath):
 				item=self.listItemObject(self.doc,self,item)

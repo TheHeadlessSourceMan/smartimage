@@ -3,8 +3,8 @@
 """
 A layer that contains an image
 """
-from layer import *
 from imgTools import *
+from layer import *
 
 
 class ImageLayer(Layer):
@@ -33,6 +33,9 @@ class ImageLayer(Layer):
 
 	@property
 	def image(self):
+		"""
+		the image for this layer
+		"""
 		ref=self._getProperty('file')
 		img=self.docRoot.imageByRef(ref)
 		w=self._getProperty('w','auto')
@@ -49,6 +52,9 @@ class ImageLayer(Layer):
 
 	@property
 	def w(self):
+		"""
+		get the width from the loaded image if not specified
+		"""
 		w=self._getProperty('w','auto')
 		if w in ['0','auto']:
 			w=self.image.size[0]
@@ -57,6 +63,9 @@ class ImageLayer(Layer):
 		return w
 	@property
 	def h(self):
+		"""
+		get the height from the loaded image if not specified
+		"""
 		h=self._getProperty('h','auto')
 		if h in ['0','auto']:
 			h=self.image.size[1]

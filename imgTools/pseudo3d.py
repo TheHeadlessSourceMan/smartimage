@@ -3,6 +3,7 @@
 """
 Tools to create/apply pseudo 3d data, including relighting.
 """
+import math
 try:
 	# first try to use bohrium, since it could help us accelerate
 	# https://bohrium.readthedocs.io/users/python/
@@ -10,29 +11,28 @@ try:
 except ImportError:
 	# if not, plain old numpy is good enough
 	import numpy as np
+import scipy.ndimage
 from helper_routines import *
 from imageRepr import *
 from colors import *
 from resizing import *
 from colorSpaces import *
-import scipy.ndimage
-import math
- 
- 
+
+
 def normalMapFromImage(img,zPower=0.33):
 	"""
 	Attempt to get a normal map from an image using edge detection.
-	
+
 	:param img: the image to create a normal map for
 	:param zPower: percent of z estimation to allow (keep it low because this is always a total guess)
-	
+
 	NOTE: This is a common approach, but it is only an approximation, not actual height data.
 		It will only give you something that may or may not look 3d.
 		The real way to do this is to directly measure the height data directly using something like a kinect or 3d digitizer.
 		An acceptable alternative is a multi-angle photo stitcher such as 123D Catch.
 		In fact, if all you have is a 2d image, something like AwesomeBump would be more versitile.
 			https://github.com/kmkolasinski/AwesomeBump
-			
+
 	See also:
 		https://github.com/RobertBeckebans/gimp-plugin-insanebump
 	"""
@@ -42,34 +42,36 @@ def normalMapFromImage(img,zPower=0.33):
 	mag=np.hypot(x,y)
 	z=normalize(scipy.ndimage.distance_transform_edt(mag))*zPower+(0.5-zPower/2)
 	return np.dstack((x,y,z))
-	
-	
+
+
 def directionToNormalColor(azimuth,elevation):
 	"""
 	given a direction, convert it into an RGB normal color
-	
+
 	:param azimuth: compass direction
 	:param elevation: up/down direction
 	"""
 	azimuth=math.radians(float(azimuth))
 	elevation=math.radians(float(elevation))
 	return (np.array([math.sin(azimuth),math.cos(azimuth),math.cos(elevation)])+1)/2
-	
-	
-def applyDirectionalLight(img,normalmap=None,lightAzimuth=45,lightElevation=45,lightColor=[1.0,1.0,1.0]):
+
+
+def applyDirectionalLight(img,normalmap=None,lightAzimuth=45,lightElevation=45,lightColor=None):
 	"""
 	Add a directional light to the image.
-	
+
 	:param img: the image to light
 	:param normalmap: a normal map to define its shape (if None, use normalMapFromImage(img))
 	:param lightAzimuth: compass direction of the light source
 	:param lightElevation: up/down direction of the light source
-	:param lightColor: color of the light source
-	
+	:param lightColor: color of the light source (if None, use white)
+
 	TODO: doesn't work the greatest
 	"""
 	img=numpyArray(img)
-	if normalmap==None:
+	if lightColor is None:
+		lightColor=[1.0,1.0,1.0]
+	if normalmap is None:
 		normalmap=normalMapFromImage(img)
 	else:
 		normalmap=numpyArray(normalmap)
@@ -80,26 +82,26 @@ def applyDirectionalLight(img,normalmap=None,lightAzimuth=45,lightElevation=45,l
 	lightMap=np.average(normalmap,axis=-1)
 	lightMap=lightMap[:,:,np.newaxis]*lightColor
 	return img+lightMap
- 
- 
+
+
 def heightMapFromNormalMap(normalmap):
 	"""
 	Create a height map (sometimes called a bumpmap) from a normalmap
-	
+
 	:param normalmap: normal map to convert
-	
+
 	NOTE: Essentially, this is just the blue channel pointing towards us.
 	"""
 	normalmap=numpyArray(normalmap)
 	return normalize(normalmap[:,:,2])
- 
- 
+
+
 def normalMapFromHeightMap(heightmap):
 	"""
 	Create a normal map from a height map (sometimes called a bumpmap)
-	
+
 	:param heightmap: height map to convert
-	
+
 	Comes from:
 		http://www.juhanalankinen.com/calculating-normalmaps-with-python-and-numpy/
 	"""
@@ -120,7 +122,7 @@ def normalMapFromHeightMap(heightmap):
 	fNormMax = np.max(np.abs(matNormal))
 	matNormal = ((matNormal / fNormMax) + 1.0) / 2.0
 	return matNormal
- 
+
 
 if __name__ == '__main__':
 	import sys
@@ -157,37 +159,37 @@ if __name__ == '__main__':
 						params=[]
 					else:
 						params=arg[1].split(',',3)
-						if norm==None:
-							if bump!=None:
+						if norm is None:
+							if bump is not None:
 								norm=normalMapFromHeightMap(bump)
 					img=applyDirectionalLight(img,norm,*params)
 				elif arg[0]=='--show':
 					preview(img)
 				elif arg[0]=='--showNorm':
-					if norm==None:
-						if bump==None:
+					if norm is None:
+						if bump is None:
 							norm=normalMapFromImage(img)
 						else:
 							norm=normalMapFromHeightMap(bump)
 					preview(norm)
 				elif arg[0]=='--showBump':
-					if bump==None:
-						if norm==None:
+					if bump is None:
+						if norm is None:
 							norm=normalMapFromImage(img)
 						bump=heightMapFromNormalMap(norm)
 					preview(bump)
 				elif arg[0]=='--save':
 					pilImage(clampImage(img)).save(arg[1])
 				elif arg[0]=='--saveNorm':
-					if norm==None:
-						if bump==None:
+					if norm is None:
+						if bump is None:
 							norm=normalMapFromImage(img)
 						else:
 							norm=normalMapFromHeightMap(bump)
 					pilImage(clampImage(norm)).save(arg[1])
 				elif arg[0]=='--saveBump':
-					if bump==None:
-						if norm==None:
+					if bump is None:
+						if norm is None:
 							norm=normalMapFromImage(img)
 						bump=heightMapFromNormalMap(norm)
 					pilImage(clampImage(bump)).save(arg[1])

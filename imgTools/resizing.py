@@ -10,9 +10,9 @@ try:
 except ImportError:
 	# if not, plain old numpy is good enough
 	import numpy as np
+from PIL import Image, ImageOps
 import imageRepr
 from bounds import *
-from PIL import Image
 
 
 def imageBorder(img,thickness,edge="#ffffff00"):
@@ -26,7 +26,7 @@ def imageBorder(img,thickness,edge="#ffffff00"):
 		repeat - repeat the image over again (useful with repeating textures)
 		clamp - streak last pixels out to edge
 		[background color] - simply fill with the given color
-	
+
 	TODO: combine into extendImageCanvas function
 	"""
 	img=imageRepr.pilImage(img)
@@ -119,7 +119,7 @@ def imageBorder(img,thickness,edge="#ffffff00"):
 			newImage.paste(img,(thickness,thickness))
 	return newImage
 
-	
+
 def extendImageCanvas(pilImage,newBounds,extendColor=(128,128,128,0)):
 	"""
 	Make pilImage the correct canvas size/location.
@@ -129,10 +129,10 @@ def extendImageCanvas(pilImage,newBounds,extendColor=(128,128,128,0)):
 	:param extendColor: color to use when extending the canvas (automatically choses image mode based on this color)
 
 	:return new PIL image:
-	
+
 	NOTE: always creates a new image, so no original bits are altered
 	"""
-	if type(newBounds)==tuple:
+	if isinstance(newBounds,tuple):
 		if len(newBounds)>2:
 			x,y,w,h=newBounds
 		else:
@@ -169,6 +169,7 @@ def paste(image,overImage,position=(0,0),resize=True):
 	:param overImage: the image will be pasted over the top of this image (if None, returns image)
 	:param position: the position to place the new image, relative to overImage (can be negative)
 	:param resize: allow the resulting image to be resized if overImage extends beyond its bounds
+		TODO: need to implement this
 
 	:returns: a combined image, or None if both image and overImage are None
 
@@ -177,9 +178,9 @@ def paste(image,overImage,position=(0,0),resize=True):
 	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
 	"""
 	image=imageRepr.pilImage(image)
-	if image==None:
+	if image is None:
 		return overImage
-	if overImage==None:
+	if overImage is None:
 		if position==(0,0): # no change
 			return image
 		else:
@@ -192,7 +193,7 @@ def paste(image,overImage,position=(0,0),resize=True):
 			mode=imageRepr.maxMode(image,overImage,requireAlpha=True))
 		paste(overImage,newImg)
 		overImage=newImg
-	elif hasattr(overImage,'immutable') and overImage.immutable==True:
+	elif hasattr(overImage,'immutable') and overImage.immutable:
 		# if it is flagged immutable, create a copy that we are allowed to change
 		overImage=overImage.copy()
 	# do the deed
@@ -206,11 +207,11 @@ def paste(image,overImage,position=(0,0),resize=True):
 		overImage.paste(image,(int(position[0]),int(position[1])))
 	return overImage
 
-	
+
 def getSize(ofThis):
 	"""
 	get the xy size of something regardless of what kind it is
-	
+
 	:param ofThis: can be any of
 		PIL image
 		numpy array
@@ -219,15 +220,15 @@ def getSize(ofThis):
 		"w,h"
 		anything derived from Bounds
 	"""
-	if type(ofThis) in [str,unicode]:
+	if isinstance(ofThis,basestring):
 		return ofThis.split(',')[0:2]
 	if type(ofThis) in [tuple,list]:
 		if len(ofThis)==2:
-			return [ofThis[-2],ofThis[-1]]	
-	if type(ofThis)==np.ndarray:
+			return [ofThis[-2],ofThis[-1]]
+	if isinstance(ofThis,np.ndarray):
 		return [ofThis.shape[0]-1,ofThis.shape[1]-1]
 	if isinstance(ofThis,Bounds):
-		return bounds.size
+		return ofThis.size
 	if isinstance(ofThis,Image.Image):
 		return [ofThis.width,ofThis.height]
 	return None
@@ -236,7 +237,7 @@ def makeSameSize(img1,img2,edge=(0,0,0,0)):
 	"""
 	pad the images with so they are the same size.  Commonly used for things like
 	resizing before blending
-	
+
 	:param img1: first image
 	:param img2: second image
 	:param edge: defines how to extend.  It can be:
@@ -244,7 +245,7 @@ def makeSameSize(img1,img2,edge=(0,0,0,0)):
 		repeat - repeat the image over again (useful with repeating textures)
 		clamp - streak last pixels out to edge
 		[background color] - simply fill with the given color
-		
+
 	:return: (img1,img2)
 	"""
 	size1=getSize(img1)
@@ -254,17 +255,17 @@ def makeSameSize(img1,img2,edge=(0,0,0,0)):
 	if size2[0]<size1[0] or size2[0]<size1[0]:
 		img2=extendImageCanvas(img2,(max(size1[0],size2[0]),max(size1[1],size2[1])),edge)
 	return img1,img2
-	
-	
+
+
 def crop(img,size):
 	"""
 	crop an image to a given size
-	
+
 	:param size: can be anything that getSize() supports
-	
+
 	:returns: image of the cropped size (or smaller)
 		can return None if selection is of zero size
-	"""	
+	"""
 	region=None
 	img=numpyArray(img)
 	if (type(size) not in (list,tuple)) and (isinstance(size,np.ndarray)==False or len(size.shape)>1):
@@ -282,7 +283,7 @@ def crop(img,size):
 		if size[2]>0 and size[3]>0:
 			region=img[size[0]:size[2],size[1]:size[3]]
 	return region
-	
+
 
 if __name__ == '__main__':
 	import sys
@@ -298,6 +299,7 @@ if __name__ == '__main__':
 	if len(sys.argv)<2:
 		printhelp=True
 	else:
+		img=None
 		for arg in sys.argv[1:]:
 			if arg.startswith('-'):
 				arg=[a.strip() for a in arg.split('=',1)]

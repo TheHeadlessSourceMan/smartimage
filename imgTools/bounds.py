@@ -7,16 +7,22 @@ class Bounds(object):
 	"""
 
 	def __init__(self,*vals):
-		self.clear()
+		self.x=None
+		self.y=None
+		self.w=None
+		self.h=None
 		self.assign(vals)
 
 	def clear(self):
+		"""
+		clear the bounds
+		"""
 		self.x=None
 		self.y=None
 		self.w=None
 		self.h=None
 
-	def repr(self):
+	def __repr__(self):
 		return str(self.points)
 
 	def __len__(self):
@@ -29,6 +35,9 @@ class Bounds(object):
 		return self.points.__iter__()
 
 	def assign(self,points):
+		"""
+		assign the points to this object
+		"""
 		self.clear()
 		self.maximize(points)
 
@@ -72,23 +81,38 @@ class Bounds(object):
 
 	@property
 	def x2(self):
+		"""
+		get the right x location
+		"""
 		if self.x==None or self.w==None:
 			return None
 		return self.x+self.w
 	@property
 	def y2(self):
+		"""
+		get the bottom y location
+		"""
 		if self.y==None or self.h==None:
 			return None
 		return self.y+self.h
 	@x2.setter
 	def x2(self,x2):
+		"""
+		set the right x location
+		"""
 		self.w=x2-self.x
 	@y2.setter
 	def y2(self,y2):
+		"""
+		set the bottom y location
+		"""
 		self.h=y2-self.y
 
 	@property
 	def points(self):
+		"""
+		get the object's corner points
+		"""
 		x=self.x
 		y=self.y
 		x2=self.x2
@@ -96,34 +120,61 @@ class Bounds(object):
 		return ((x,y),(x2,y),(x2,y2),(x,y2))
 	@points.setter
 	def points(self,points):
+		"""
+		set the object's corner points
+		"""
 		self.assign(points)
 
 	@property
 	def location(self):
+		"""
+		get the object's location tuple
+		"""
 		return (self.x,self.y)
 	@location.setter
 	def location(self,location):
+		"""
+		set the object's location tuple
+		"""
 		self.x,self.y=location
 
 	@property
 	def size(self):
+		"""
+		get the object's size tuple
+		"""
 		return (self.w,self.h)
 	@size.setter
 	def size(self,size):
+		"""
+		set the object's size tuple
+		"""
 		self.w,self.h=size
-		
+
 	@property
 	def offset(self):
+		"""
+		get the object's offset
+		"""
 		return (self.x,self.y)
 	@offset.setter
 	def offset(self,offset):
+		"""
+		set the object's offset
+		"""
 		self.x,self.y=offset
 
 	@property
 	def center(self):
+		"""
+		get the object's center point
+		"""
 		return (self.x+self.w/2,self.y+self.h/2)
 	@center.setter
 	def center(self,center):
+		"""
+		set the object's center point
+		"""
 		self.x=center[0]+self.w/2
 		self.y=center[0]+self.y/2
 
@@ -139,12 +190,12 @@ class Bounds(object):
 
 		point can be a single point or a list of points
 		"""
-		if type(points)==list:
+		if isinstance(points,list):
 			for point in points:
 				if self.pointTest(point):
 					return True
 			return False
-		return points[0]>=x and points[0]<=x2 and points[1]>=y and points[1]<=y2
+		return points[0]>=self.x and points[0]<=self.x2 and points[1]>=self.y and points[1]<=self.y2
 
 	def isEndlosedBy(self,otherBounds):
 		"""
@@ -171,6 +222,12 @@ class Bounds(object):
 		return otherBounds.pointTest(self.points)
 
 	def move(self,deltaX,deltaY):
+		"""
+		shift the bounds over a certain amount
+
+		:param deltaX: nudge this many pixels x (negative=left,zero=nomove,positive=right)
+		:param deltaY: nudge this many pixels y (negative=up,zero=nomove,positive=down)
+		"""
 		self.x+=deltaX
 		self.y+=deltaY
 
@@ -182,21 +239,21 @@ class Bounds(object):
 		self.h,self.w=(self.w,self.h)
 
 	@classmethod
-	def findCenter(self,points):
+	def findCenter(cls,points):
 		"""
 		Utility to find the geographic center of a group of points tuples
 		"""
 		return Bounds(points).center
 
 	@classmethod
-	def rotatedPoints(self,points,angle,center=None):
+	def rotatedPoints(cls,points,angle,center=None):
 		"""
 		Utility to return a set of point tuples based on an existing set of point tuples, only rotated.
 
 		If center=None, will findcenter(points) first
 		"""
-		if center==None:
-			center=self.findCenter(points)
+		if center is None:
+			center=cls.findCenter(points)
 		ret=[]
 		angle=math.radians(angle)
 		sin_a,cos_a=abs(math.sin(angle)),abs(math.cos(angle))

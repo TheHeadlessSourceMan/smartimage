@@ -2,11 +2,18 @@
 # -*- coding: utf-8 -*-
 """
 Contains mathematical morphology routines (dilate, erode, etc)
+
+See also:
+	https://en.wikipedia.org/wiki/Mathematical_morphology
 """
 from imageRepr import *
 
-	
+
 def erode(img):
+	"""
+	implement image erosion
+
+	"""
 	a=np.asarray(img)
 	def _erode(p):
 		print p
@@ -14,13 +21,11 @@ def erode(img):
 		return p
 	applyFunctionToPatch(_erode,a,(3,3))
 	return Image.fromarray(a.astype('uint8'),img.mode)
-	
+
 
 def dilate(img,size=3):
 	"""
 	implement image dilation
-	
-	TODO: does not belong in this file!
 	"""
 	return scipy.ndimage.grey_dilation(img,size=(size,size))
 

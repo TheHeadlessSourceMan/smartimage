@@ -3,22 +3,29 @@
 """
 Routines to convert between color spaces
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 from imageRepr import *
 
-	
+
 def changeColorspace(img,toSpace='RGB',fromSpace=None):
 	"""
 	change from any colorspace to any colorspace
-	
+
 	:param img: the image to convert
 	:param toSpace: space to convert to
 	:param fromSpace: space to convert from - guess from img if None
-	
+
 	NOTE: for more colorspace conversions than you can shake a chameleon at:
 		http://colormine.org/
 	"""
 	img=numpyArray(img)
-	if fromSpace==None:
+	if fromSpace is None:
 		fromSpace=imageMode(img)
 	raiseErr=False
 	if fromSpace!=toSpace:
@@ -48,26 +55,26 @@ def changeColorspace(img,toSpace='RGB',fromSpace=None):
 	if raiseErr:
 		raise NotImplementedError('No conversion exists from colorspace "'+fromSpace+'" to "'+toSpace+'"')
 	return img
-	
-	
+
+
 def rgb2hsvImage(img):
 	"""
 	same as rgb2hsvArray only returns an image
-	
+
 	:param img: image to convert.  can be pil image or numpy array
-	
+
 	:return img: returns an "rgb" image, that is actually "hsv"
 	"""
 	return pilImage(rgb2hsvArray(rgb))
-	
-	
+
+
 def rgb2hsvArray(rgb):
 	"""
 	Transform an rgb array to an hsv array
-	
+
 	:param rgb: the input image.  can be pil image or numpy array
 	:return hsv: the output array
-	
+
 	This comes from scikit-image:
 		https://github.com/scikit-image/scikit-image/blob/master/skimage/color/colorconv.py
 	"""
@@ -107,25 +114,25 @@ def rgb2hsvArray(rgb):
 		out=out[0,0]
 	return out
 
-	
+
 def hsv2rgbImage(img):
 	"""
 	same as rgb2hsvArray only returns an image
-	
+
 	:param img: image to convert.  can be pil image or numpy array
-	
+
 	:return img: returns an "rgb" image, that is actually "hsv"
 	"""
 	return pilImage(hsv2rgbArray(rgb))
-	
+
 
 def hsv2rgbArray(hsv):
 	"""
 	Transform an hsv image to an rgb array
-	
+
 	:param hsv: the input image.  can be pil image or numpy array
 	:return rgb: the output array
-	
+
 	This comes from scikit-image:
 		https://github.com/scikit-image/scikit-image/blob/master/skimage/color/colorconv.py
 	"""
@@ -142,13 +149,13 @@ def hsv2rgbArray(hsv):
 	v = hsv[:, :, 2]
 	hi = np.dstack([hi, hi, hi]).astype(np.uint8) % 6
 	out = np.choose(hi, [np.dstack((v, t, p)),
-		 np.dstack((q, v, p)),
-		 np.dstack((p, v, t)),
-		 np.dstack((p, q, v)),
-		 np.dstack((t, p, v)),
-		 np.dstack((v, p, q))])
+		np.dstack((q, v, p)),
+		np.dstack((p, v, t)),
+		np.dstack((p, q, v)),
+		np.dstack((t, p, v)),
+		np.dstack((v, p, q))])
 	return out
-	
+
 
 def rgb2cmykArray(rgb):
 	"""
@@ -166,26 +173,26 @@ def rgb2cmykArray(rgb):
 	k = minCMY
 	cmyk=np.dstack((c,m,y,k))
 	return cmyk
-	
+
 def rgb2cmykImage(img):
 	"""
 	same as rgb2cmykArray only takes an image and returns an image
-	
+
 	:param img: image to convert
-	
+
 	:return img: returns an "rgba" image, that is actually "cmyk"
 	"""
 	rgb=numpyArray(img)
 	final=rgb2cmykArray(rgb)
 	return pilImage(final)
-	
+
 def getChannel(img,channel):
 	"""
 	get a channel as a new image.
-	
+
 	:param img: the image to extract a color channel from
 	:param channel: name of the channel to extract - supports R,G,B,A,H,S,V
-	
+
 	Returns a grayscale image, or None
 	"""
 	if channel=='R':
@@ -233,11 +240,11 @@ def getChannel(img,channel):
 		raise Exception('Unknown channel: '+channel)
 	return ch
 
-	
+
 def grayscale(img,method='BT.709'):
 	"""
 	Convert any image to grayscale
-	
+
 	:param method: available are:
 		"max" - max of all channels
 		"min" - min of all channels
@@ -246,7 +253,7 @@ def grayscale(img,method='BT.709'):
 		"ps-gimp" - weighted average used by most image applications
 		"BT.709" - [default] weighted average specified by ITU-R "luma" specification BT.709
 		"BT.601" - weighted average specified by ITU-R specification BT.601 used by video formats
-	
+
 	NOTE:
 		There are many different ways to go about this.
 		http://www.tannerhelland.com/3643/grayscale-image-algorithm-vb6/
@@ -284,6 +291,7 @@ if __name__ == '__main__':
 	if len(sys.argv)<2:
 		printhelp=True
 	else:
+		img=None
 		from helper_routines import defaultLoader
 		for arg in sys.argv[1:]:
 			if arg.startswith('-'):
@@ -292,7 +300,7 @@ if __name__ == '__main__':
 					printhelp=True
 				elif arg[0]=='--channel':
 					ch=getChannel(img,arg[1])
-					if ch==None:
+					if ch is None:
 						print 'No channel:',arg[1]
 					else:
 						ch.show()

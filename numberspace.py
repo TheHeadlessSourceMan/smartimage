@@ -4,7 +4,6 @@
 This is a number space conversion layer
 """
 from layer import *
-import random
 
 
 class NumberSpace(Layer):
@@ -14,24 +13,39 @@ class NumberSpace(Layer):
 
 	def __init__(self,docRoot,parent,xml):
 		Layer.__init__(self,docRoot,parent,xml)
-		
+
 	@property
 	def space(self):
+		"""
+		nunberspace to transform to/from
+		"""
 		return self._getProperty('space')
-		
+
 	@property
 	def levels(self):
+		"""
+		the levels to use (if necessary for a given transformation)
+		"""
 		return self._getProperty('levels')
-		
+
 	@property
 	def mode(self):
+		"""
+		the mode to use (if necessary for a given transformation)
+		"""
 		return self._getProperty('mode')
-		
+
 	@property
 	def invert(self):
+		"""
+		perform the reverse transformation to get back to the original
+		"""
 		return self._getPropertyBool('invert')
-		
+
 	def _transform(self,img):
+		"""
+		transform the image into this numberspace
+		"""
 		space=self.space
 		if space=='polar':
 			if self.invert:
@@ -74,13 +88,13 @@ class NumberSpace(Layer):
 			else:
 				ret=toWavelet(img,space,mode=self.mode,level=None)
 		return ret
-		
+
 	def renderImage(self,renderContext=None):
 		"""
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
 		opacity=self.opacity
-		if opacity<=0.0 or self.visible==False:
+		if opacity<=0.0 or not self.visible:
 			return None
 		image=self._transform(Layer.renderImage(self,renderContext).copy())
 		if self.opacity<1.0:

@@ -22,7 +22,7 @@ class XmlBackedObject(object):
 		"""
 		name - the attribute in the original object that we got value from (or '_' = text contents)
 		"""
-		while type(value) in [str,unicode] and len(value)>0 and value[0]=='@':
+		while isinstance(value,basestring) and len(value)>0 and value[0]=='@':
 			# loop detection
 			if value in nofollow:
 				nofollow.append(value)
@@ -34,7 +34,7 @@ class XmlBackedObject(object):
 			value=None
 			if allowReplacements and idFind[0] in self.docRoot.variables:
 				value=self.docRoot.variables[idFind[0]].value
-			if allowLinks and value==None:
+			if allowLinks and value is None:
 				xob=self.docRoot.getLayer(idFind[0])
 				if xob!=None:
 					name=idFind[1]
@@ -73,7 +73,7 @@ class XmlBackedObject(object):
 			You can also have a replacement value that is a link, or a link that points to a replacement value.
 		"""
 		value=self._getProperty(name,default,allowReplacements,allowLinks)
-		if type(value) in [str,unicode]:
+		if isinstance(value,basestring):
 			if len(value)<1:	
 				value=default
 			else:
@@ -87,7 +87,7 @@ class XmlBackedObject(object):
 	@property
 	def id(self):
 		if 'id' not in self.xml.attrib:
-			if self._id==None:
+			if self._id is None:
 				self._id=str(self.docRoot.getNextId())
 			return self._id
 		return self.xml.attrib['id']

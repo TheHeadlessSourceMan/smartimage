@@ -4,18 +4,27 @@
 This is a text layer
 """
 import os
-from layer import *
 import struct
+import urllib,urllib2
 import textwrap
 from PIL import ImageFont, ImageDraw
-import urllib,urllib2
+import lxml.etree
+from layer import *
+
 
 # TODO: select based on OS
 DEFAULT_FONT=r'c:\windows\fonts\arial.ttf'
 #DEFAULT_FONT='Helvetica'
 #DEFAULT_FONT='sans-serif'
 
-def fontSquirrelGet(fontName,cachedir):
+
+def fontSquirrelGet(fontName,cacheDir):
+	"""
+	get a font from fontsquirrel
+
+	:param fontName: the named font to fetch
+	:param cacheDir: the location to cache fonts
+	"""
 	fontName=fontName.replace(' ','-')
 	url='https://www.fontsquirrel.com/fonts/download/'+fontName
 	req=urllib2.Request(url)
@@ -30,7 +39,14 @@ def fontSquirrelGet(fontName,cachedir):
 		print url
 		print e
 
-def fontSquirrelPage(fontName,cachedir):
+
+def fontSquirrelPage(fontName,cacheDir):
+	"""
+	get the page for a fontsquirrel font
+
+	:param fontName: the named font to fetch
+	:param cacheDir: the location to cache fonts
+	"""
 	fontName=fontName.replace(' ','-')
 	url='https://www.fontsquirrel.com/fonts/'+fontName
 	ret=None
@@ -43,21 +59,31 @@ def fontSquirrelPage(fontName,cachedir):
 		print e
 	return ret
 
-def fontSquirrelLicense(fontName,cachedir):
+
+def fontSquirrelLicense(fontName,cacheDir):
 	"""
 	Retrieve the license for the given font as html
+
+	:param fontName: the named font to fetch
+	:param cacheDir: the location to cache fonts
 	"""
-	page=fontSquirrelPage(fontName,cachedir)
-	if page==None:
+	page=fontSquirrelPage(fontName,cacheDir)
+	if page is None:
 		return None
 	page=lxml.etree(page)
 	return lxml.xpath('//*[@id="panel_eula"]')[0]
 
 
-def googleFontsGet(fontName,cachedir):
+def googleFontsGet(fontName,cacheDir):
+	"""
+	download the font from google fonts
+
+	:param fontName: the named font to fetch
+	:param cacheDir: the location to cache fonts
+	"""
 	font=None
 	# try to download from google fonts
-	fontcache=cachedir+fontName
+	fontcache=cacheDir+fontName
 	if not os.path.exists(fontcache):
 		# download the info file if we don't have one
 		url='https://fonts.googleapis.com/css?family='+urllib.quote_plus(fontName)
@@ -75,7 +101,7 @@ def googleFontsGet(fontName,cachedir):
 		f=open(fontcache,'rb')
 		url=f.read().split('url(',1)[-1].split(')',1)[0]
 		f.close()
-		fontcache=cachedir+urllib.quote_plus(url)
+		fontcache=cacheDir+urllib.quote_plus(url)
 		if not os.path.exists(fontcache):
 			# download the real font if we don't already have it
 			req=urllib2.Request(url)
@@ -91,12 +117,18 @@ def googleFontsGet(fontName,cachedir):
 	return font
 
 def downloadFont(fontName):
-	cachedir=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep+'font_cache'+os.sep
-	font=googleFontsGet(fontName,cachedir)
+	"""
+	locate and download the named font
+
+	:param fontName: the named font to fetch
+	"""
+	cacheDir=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep+'font_cache'+os.sep
+	font=googleFontsGet(fontName,cacheDir)
 	# TODO: fontsquirrel not implemented
-	#if font==None:
-	#	font=fontSquirrelGet(fontName,cachedir)
+	#if font is None:
+	#	font=fontSquirrelGet(fontName,cacheDir)
 	return font
+
 
 class TextLayer(Layer):
 	"""
@@ -109,15 +141,27 @@ class TextLayer(Layer):
 
 	@property
 	def fontName(self):
+		"""
+		get the font name
+		"""
 		return self._getProperty('font',None)
 	@property
 	def fontSize(self):
+		"""
+		get the font size
+		"""
 		return int(self._getProperty('fontSize',24))
 	@property
 	def typeFace(self):
+		"""
+		get the tupe face
+		"""
 		return int(self._getProperty('typeFace',0))
 	@property
 	def color(self):
+		"""
+		get the color of the text
+		"""
 		return self._getProperty('color','#000000')
 
 	@property
@@ -143,15 +187,27 @@ class TextLayer(Layer):
 
 	@property
 	def anchor(self):
+		"""
+		get the anchor point
+		"""
 		return self._getProperty('anchor','left')
 	@property
 	def lineSpacing(self):
+		"""
+		get the spacing between repeats
+		"""
 		return int(self._getProperty('lineSpacing',0))
 	@property
 	def align(self):
+		"""
+		get the horizontal alignment
+		"""
 		return self._getProperty('align','left')
 	@property
 	def verticalAlign(self):
+		"""
+		get the vertical alignment
+		"""
 		return self._getProperty('verticalAlign','top')
 
 	@property
@@ -170,7 +226,7 @@ class TextLayer(Layer):
 			fontName=self.fontName
 		else:
 			fontName=DEFAULT_FONT
-		if self._font==None:
+		if self._font is None:
 			# first look in the zipped file
 			for name in self.docRoot.componentNames:
 				name=name.rsplit('.',1)
@@ -179,17 +235,17 @@ class TextLayer(Layer):
 						name='.'.join(name)
 						self._font=ImageFont.truetype(self.docRoot.getComponent(name),self.fontSize,self.typeFace)
 						break
-		if self._font==None:
+		if self._font is None:
 			# try the os
 			try:
 				self._font=ImageFont.truetype(fontName,self.fontSize,self.typeFace)
 			except IOError:
 				self._font=None
-		if self._font==None:
+		if self._font is None:
 			fontdata=downloadFont(fontName)
 			if fontdata!=None:
 				self._font=ImageFont.truetype(fontdata,self.fontSize,self.typeFace)
-		if self._font==None:
+		if self._font is None:
 			raise Exception('Cannot find font anywhere: "'+fontName+'"')
 		return self._font
 

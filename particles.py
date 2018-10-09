@@ -3,8 +3,8 @@
 """
 This is a particles type layer
 """
-from layer import *
 import random
+from layer import *
 
 
 class Particles(Layer):
@@ -17,6 +17,9 @@ class Particles(Layer):
 
 	@property
 	def randomize(self):
+		"""
+		randomize the particle locations
+		"""
 		randies={}
 		for r in self._getProperty('randomize','').split(','):
 			r=[kv.strip() for kv in r.split('=',1)]
@@ -24,29 +27,35 @@ class Particles(Layer):
 				r[1]=r[1].split('|')
 			randies[r[0]]=r[1]
 		return randies
-		
+
 	@property
 	def dispersionMap(self):
+		"""
+		an image to define where particles can land
+		"""
 		self._getImageProperty('dispersionMap')
-		
+
 	@property
 	def qty(self):
+		"""
+		how many particles to create
+		"""
 		return int(self._getProperty('qty','1'))
-		
+
 	def nextRandomSet(self):
 		"""
 		Returns the next set of randomize values
 		"""
 		values={}
 		for k,v in self.randomize.items():
-			if type(v)==list:
+			if isinstance(v,list):
 				v=random.choice(v)
 			v=v.split('..',1)
-			if len(v)>0:
+			if v:
 				v=uniform(float(v[0]),v[1])
 			values[k]=v
 		return values
-		
+
 	@property
 	def image(self):
 		for i in range(self.qty):

@@ -163,34 +163,36 @@ HTML_COLOR_NAMES={
 	'yellowgreen':('YellowGreen',[0x9A,0xCD,0x32]),
 	}
 
-	
-def strToColor(s,asFloat=True,defaultColor=[255,255,255,0]):
+
+def strToColor(s,asFloat=True,defaultColor=None):
 	"""
 	convert an html color spec to a color array
-	
+
 	always returns an rgba[], regardless of input color being:
 		#FFFFFF
 		#FFFFFFFF
 		rgb(128,12,23)
 		rgba(234,33,23,0)
 		yellow
-		
+
 	:param s: an html color string
 	:param asFloat: always return a 0.0 to 1.0 floats verses a 0 to 255 bytes
-	
+
 	:returns: an rgba[]
 	"""
 	import struct
-	if type(s)==None:
+	if defaultColor is None:
+		defaultColor=[255,255,255,0]
+	if s is None:
 		ret=defaultColor
-	if type(s) not in [str,unicode]:
-		if type(s)==tuple:
+	if not isinstance(s,basestring):
+		if isinstance(s,tuple):
 			s=[ch for ch in s]
 		ret=s
 	else:
 		s=s.strip().lower()
-		if len(s)==0:
-			if type(defaultColor) not in [str,unicode]:
+		if not s:
+			if isinstance(defaultColor,basestring):
 				return defaultColor
 			s=defaultColor
 		if s in HTML_COLOR_NAMES:
@@ -206,18 +208,18 @@ def strToColor(s,asFloat=True,defaultColor=[255,255,255,0]):
 			if len(ret)<4:
 				ret.append(255)
 	# force into float or int
-	for i in range(len(ret)):
-		if type(ret[i])!=int:
+	for i,val in enumerate(ret):
+		if isinstance(val,int):
 			if not asFloat:
-				ret[i]=int(ret[i]*256)
+				ret[i]=int(val*256)
 		elif asFloat:
-			ret[i]=ret[i]/256.0
+			ret[i]=val/256.0
 	return np.array(ret)
-	
-	
+
+
 def colorToStr(s,preferHex=True,alwaysHex=False,useNamed=False):
 	"""
-	:param s: the color to convert (If it is a string, it will be converted to a color, 
+	:param s: the color to convert (If it is a string, it will be converted to a color,
 		then back.  Thus you can convert from one string format to another.)
 	:param preferHex: return hex over rgb() but NOT over rgba()
 	:param alwaysHex: always returns a hex string over rgb() or even rgba()
@@ -237,7 +239,7 @@ def colorToStr(s,preferHex=True,alwaysHex=False,useNamed=False):
 		return 'rgba('+(','.join(s))+')'
 	return 'rgb('+(','.join(s))+')'
 
-	
+
 if __name__ == '__main__':
 	import sys
 	# Use the Psyco python accelerator if available

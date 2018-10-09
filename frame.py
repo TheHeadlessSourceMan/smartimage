@@ -13,13 +13,19 @@ class Frame(Layer):
 
 	def __init__(self,docRoot,parent,xml):
 		Layer.__init__(self,docRoot,parent,xml)
-		
+
 	@property
 	def time(self):
+		"""
+		the time delay of this frame before advancing to the next one
+		"""
 		return self._getFloat('time',0.25)
-		
+
 	@property
 	def wait(self):
+		"""
+		wait for user input to advance to the next frame
+		"""
 		return self._getBool('wait',False)
 
 

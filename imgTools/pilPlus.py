@@ -3,6 +3,13 @@
 """
 This is an experimental extension of PIL images allowing advanced access
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 from PIL import Image
 from bounds import Bounds
 from colorSpaces import *
@@ -12,7 +19,7 @@ class PilPlusImage(Image.Image,Bounds):
 	"""
 	This is an experimental extension of PIL images allowing advanced access
 	"""
-	
+
 	def __init__(self,image=None):
 		Image.Image.__init__(self)
 		Bounds.__init__(self)
@@ -21,7 +28,7 @@ class PilPlusImage(Image.Image,Bounds):
 		self.imageLoader=None
 		if image!=None:
 			self.image=image
-		
+
 	def getChannel(self,id):
 		"""
 		get a channel in floating point form
@@ -53,11 +60,11 @@ class PilPlusImage(Image.Image,Bounds):
 				self._activeChannels['a']=ret
 				return ret
 		return self._activeChannels[id]
-		
+
 	def grayscale(self,method='BT.709'):
 		"""
 		Convert to grayscale
-		
+
 		:param method: available are:
 			"max" - max of all channels
 			"min" - min of all channels
@@ -66,24 +73,30 @@ class PilPlusImage(Image.Image,Bounds):
 			"ps-gimp" - weighted average used by most image applications
 			"BT.709" - [default] weighted average specified by ITU-R "luma" specification BT.709
 			"BT.601" - weighted average specified by ITU-R specification BT.601 used by video formats
-		
+
 		NOTE:
 			There are many different ways to go about this.
 			http://www.tannerhelland.com/3643/grayscale-image-algorithm-vb6/
 		"""
 		return grayscale(self.image,method)
-		
+
 	@property
 	def image(self):
+		"""
+		get the wrapped image
+		"""
 		return self._image
 	@image.setter
 	def image(self,image):
+		"""
+		set the wrapped image
+		"""
 		self._activeChannels={}
 		if isinstance(image,PilPlusImage):
 			self._image=image.image
 		else:
 			self._image=pilImage(image,loader=self.imageLoader)
-		
+
 	def assign(self,sizeOrImage):
 		"""
 		assign this image to another image, or a certain size
@@ -94,10 +107,10 @@ class PilPlusImage(Image.Image,Bounds):
 			Bounds.assign(self,sizeOrImage)
 		else:
 			self.image=sizeOrImage
-			
+
 	def __repr__(self):
-		s='Image '+str(self.bounds)+' mode:'+self.mode+' source:'+srt(self.filename)
-		
+		return 'Image '+str(self.bounds)+' mode:'+self.mode+' source:'+str(self.filename)
+
 	@property
 	def R(self):
 		return self.getChannel('r')
@@ -113,7 +126,7 @@ class PilPlusImage(Image.Image,Bounds):
 	@property
 	def mask(self):
 		return self.getChannel('a')
-		
+
 	# ----- implement PIL image routines so that we can use this directly as an image
 	def alpha_composite(self,*args):
 		return self.image.alpha_composite(*args)
@@ -233,7 +246,7 @@ class PilPlusImage(Image.Image,Bounds):
 		return self.image.verify(*args)
 	#def width(self,*args): # get from bounds
 	#	return self.image.width(*args)
-	
+
 
 if __name__ == '__main__':
 	import sys

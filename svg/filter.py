@@ -157,7 +157,7 @@ class Filter(XmlBackedObject):
 		
 	@property
 	def children(self):
-		if self._children==None:
+		if self._children is None:
 			self._children=[]
 			for tag in self.xml.getchildren():
 				self._children.append(FilterPrimitive(self.docRoot,self,tag))

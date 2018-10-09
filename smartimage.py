@@ -3,6 +3,8 @@
 """
 This program allows an image to behave smartly and automatically
 """
+import os
+import zipfile
 try:
 	# first try to use bohrium, since it could help us accelerate
 	# https://bohrium.readthedocs.io/users/python/
@@ -10,19 +12,16 @@ try:
 except ImportError:
 	# if not, plain old numpy is good enough
 	import numpy as np
-import os
-import zipfile
 import lxml.etree
+from PIL import ImageDraw
 from layer import *
 from form import Form
-from collections import OrderedDict
-from PIL import ImageDraw
 
 
 class SmartImage(Layer):
 	"""
 	This program allows an image to behave smartly and automatically
-	
+
 	The object acts as an array of pages/frames (array of 1 if it's just a simple image)
 	"""
 
@@ -32,11 +31,12 @@ class SmartImage(Layer):
 		self._nextId=None
 		self._variables=None
 		self._varAuto=[]
-		if topSmartimage==None:
+		self._zipfile=None
+		if topSmartimage is None:
 			# we are the top, so we'll take care of the peer list
 			# (otherwise, we'll access self._topSmartimage._peerSmartimages)
 			self._peerSmartimages={}
-		if topSmartimage==None:
+		if topSmartimage is None:
 			self._topSmartimage=self
 		else:
 			self._topSmartimage=topSmartimage
@@ -47,8 +47,11 @@ class SmartImage(Layer):
 	# TODO: remove?
 	@property
 	def variables(self):
+		"""
+		get the state of all variables in play
+		"""
 		f=self.form
-		if f==None:
+		if f is None:
 			return []
 		return f.children
 		# if self._variables==None:
@@ -57,42 +60,60 @@ class SmartImage(Layer):
 				# variable=Variable(self,self,variable)
 				# self._variables[variable.name]=variable
 		# return self._variables
-		
+
 	@property
 	def form(self):
+		"""
+		get the main ui form of this document
+		"""
 		for f in self.forms:
-			if f.hidden==False:
+			if not f.hidden:
 				return f
 		return None
 
 	@property
 	def forms(self):
+		"""
+		get all of the forms in this document
+		"""
 		forms=self.xml.xpath('//*/form')
 		ret=[]
 		for form in forms:
 			ret.append(Form(self,None,form))
 		return ret
-		
+
 	@property
 	def numPages(self):
+		"""
+		how many pages are in the animation
+		"""
 		return len(self.xml.xpath('//*/page'))
-		
+
 	@property
 	def numFrames(self):
+		"""
+		how many frames are in the animation
+		"""
 		return len(self.xml.xpath('//*/frame'))
-		
+
 	@property
 	def page(self,pageNumber):
+		"""
+		if this is a multipage document, get the given page number
+		"""
 		pages=self.xml.xpath('//*/page')
 		if len(pages)<=0 and pageNumber==0:
 			return self
 		return pages[pageNumber]
-		
+
 	@property
 	def frame(self,frameNumber):
+		"""
+		if this is an animation, get a given frame number
+		"""
 		frames=self.xml.xpath('//*/frame')
 		return frames[rameNumber]
-		
+
 	def __len__(self):
 		p=self.numPages
 		f=self.numFrames
@@ -103,14 +124,14 @@ class SmartImage(Layer):
 		if f>1:
 			return f
 		return 1
-		
+
 	def __getitem__(self,idxOrSlice):
 		ret=None
 		p=self.numPages
 		f=self.numFrames
 		if f==0 and p==0:
 			return self
-		elif type(idxOrSlice)==tuple: # it's a slice
+		elif isinstance(idxOrSlice,tuple): # it's a slice
 			start,end=idxOrSlice
 			if start<0:
 				start+=self.__len__()
@@ -128,6 +149,7 @@ class SmartImage(Layer):
 				ret=self.frame[idxOrSlice]
 			else:
 				ret=self.page[idxOrSlice]
+		return ret
 
 	def getComponent(self,name):
 		"""
@@ -140,11 +162,11 @@ class SmartImage(Layer):
 			filename=os.path.join(self.filename.rsplit(os.sep,1)[0],name)
 			f=open(filename,'rb')
 		else:
-			if self._zipfile==None:
+			if self._zipfile is None:
 				self._zipfile=zipfile.ZipFile(self.filename)
 			f=self._zipfile.open(name)
 		return f
-		
+
 	def getPeerSmartimage(self,xmlName):
 		"""
 		get another smartimage .xml embedded in this file
@@ -156,23 +178,25 @@ class SmartImage(Layer):
 		if xmlName not in peerSmartimages:
 			self._peerSmartimages[xmlName]=SmartImage(self.filename,xmlName,self._topSmartimage)
 		return peerSmartimages[xmlName]
-		
-	def getItemByFilename(self,name,nameHint='',nofollow=[]):
+
+	def getItemByFilename(self,name,nameHint='',nofollow=None):
 		"""
 		get an item that resides in another smartimage
-		
+
 		:param name: should be something like:
 			@filename.xml.itemId
 			@filename.xml.name
 			@filename.itemId
 			@subfolder/filename.itemId
-		:param nameHint: used as a default when getting attributes 
+		:param nameHint: used as a default when getting attributes
 			such as <image file="@layerId"> means <image file="@layerId.result"> (wherein nameHint="result")
 		:param nofollow: used internally to prevent loops
-			
+
 		:return: the item object or None if not found
 		"""
 		item=None
+		if nofollow is None:
+			nofollow=[]
 		while name[0]=='@':
 			name=name[1:]
 		name=name.split('.')
@@ -197,7 +221,7 @@ class SmartImage(Layer):
 		"""
 		take the next unused id number
 		"""
-		if self._nextId==None:
+		if self._nextId is None:
 			data=self.getComponent('smartimage.xml').read()
 			first=True
 			maxid=1
@@ -217,7 +241,7 @@ class SmartImage(Layer):
 		#print 'GENERATED ID:',id
 		return id
 
-	def imageByRef(self,ref,visitedLayers=[]):
+	def imageByRef(self,ref,visitedLayers=None):
 		"""
 		grab an image by reference
 		ref - one of:
@@ -226,33 +250,49 @@ class SmartImage(Layer):
 
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
-		if ref==None:
+		if visitedLayers is None:
+			visitedLayers=[]
+		if ref is None:
 			return None
 		if ref.startswith('@'):
 			l=self.getLayer(ref[1:])
-			if l==None:
+			if l is None:
 				raise Exception('ERR: Missing reference to "'+ref+'"')
 			return l.renderImage()
 		return Image.open(self.docRoot.getComponent(ref),'r')
 
 	@property
 	def componentNames(self):
+		"""
+		get the names of the components in this file
+		"""
 		ret=[]
 		if os.path.isdir(self.filename):
 			ret.extend(os.listdir(self.filename))
 		else:
-			if self._zipfile==None:
+			if self._zipfile is None:
 				self._zipfile=zipfile.ZipFile(self.filename)
 			ret.extend(self._zipfile.namelist())
 		return ret
 
 	@property
 	def xml(self):
-		if self._xml==None:
+		"""
+		get the xml tree of the smartimage
+		"""
+		if self._xml is None:
 			self._xml=lxml.etree.parse(self.getComponent('smartimage.xml'))
 		return self._xml.getroot()
 
 	def write(self,image,text,xy,align=None,font=None):
+		"""
+		Write text on the image
+
+		:param image: the image to write on
+		:param xy: the point to write
+		:param align: how to align the text
+		:param font: the name of the font to use
+		"""
 		if font!=None:
 			self.setFont(font)
 		if align!=None:
@@ -261,6 +301,12 @@ class SmartImage(Layer):
 		draw.multiline_text(xy,text,None,self.currentFont,anchor=None,spacing=self.lineSpacing,align=self.textAlignment)
 
 	def load(self,filename,xmlName='smartimage.xml'):
+		"""
+		load an image
+
+		:param filename: the name of the file to load
+		:param xmlName: the name of the starting smartimage within the file
+		"""
 		self._xml=None
 		self._zipfile=None
 		self.currentFont=None
@@ -272,15 +318,15 @@ class SmartImage(Layer):
 	def save(self,filename=None):
 		"""
 		Save this image.
-		
+
 		If the filename is something other than a smartimage
 		(eg. a .png file) then will save the rendered output.
-		
+
 		:param filename: the filename to save.  If unspecified,
 			save as the currently loaded filename
 		"""
 		self.varUi(force=False)
-		if filename==None:
+		if filename is None:
 			filename=self.filename
 		extn=filename.rsplit(os.sep,1)[-1].rsplit('.',1)
 		if len(extn)<2 or extn in ['zip','simg','simt']:
@@ -295,7 +341,7 @@ class SmartImage(Layer):
 			zf.close()
 		else:
 			result=self.renderImage()
-			if result==None:
+			if result is None:
 				print 'ERR: No output to save.'
 			else:
 				result.save(filename)
@@ -320,7 +366,7 @@ class SmartImage(Layer):
 				valuetype='textarea'
 			else:
 				valuetype='text'
-		if name==None:
+		if name is None:
 			for k,v in self.variables.items():
 				if k in self._varAuto:
 					continue
@@ -353,10 +399,10 @@ class SmartImage(Layer):
 
 	def renderImage(self,renderContext=None):
 		"""
-		NOTE: you probably don't want to call directly, but rather do a 
-			smartimage[0].renderImage() just to make sure you work with 
+		NOTE: you probably don't want to call directly, but rather do a
+			smartimage[0].renderImage() just to make sure you work with
 			multi-page and multi-frame documents.
-		
+
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
 		self.varUi(force=False)
@@ -366,10 +412,11 @@ class SmartImage(Layer):
 		"""
 		returns an image smartly cropped to the given size
 
-		useGolden - TODO: try to position regions of interest on golden mean
+		:param size: the size to change to
+		:param useGolden: TODO: try to position regions of interest on golden mean
 		"""
 		image=self.image
-		if image==None:
+		if image is None:
 			return image
 		if image.size[0]<1 or image.size[1]<1:
 			raise Exception("Image is busted. ",image.size)
@@ -408,8 +455,8 @@ class SmartImage(Layer):
 			cropTo=(idx,0,idx+size[0],size[1])
 			image=image.crop(cropTo)
 		return image
-		
-		
+
+
 def registerPILPligin():
 	"""
 	Register smartimage with PIL (the Python Imaging Library)
@@ -433,14 +480,14 @@ def registerPILPligin():
 	Image.register_mime(formatName,"image/xml+smartimage")
 	print 'registered PIL plugin.'
 
-	
+
 def registerPlugins():
 	"""
 	Register SmartImage as a plugin to all known image programs
 	"""
 	registerPILPligin()
 
-	
+
 if __name__ == '__main__':
 	import sys
 	# Use the Psyco python accelerator if available
@@ -512,9 +559,7 @@ if __name__ == '__main__':
 					print arg[1],
 					if True:#try:
 						simg.setFont(arg[1])
-						print True
 					else:#except Exception,e:
-						print False
 						print e
 				elif arg[0]=='--variables':
 					didSomething=True
@@ -546,7 +591,7 @@ if __name__ == '__main__':
 	if not didSomething:
 		print 'ERR: Command accomplished nothing!\n'
 		printhelp=True
-	elif simg!=None and didOutput==False:
+	elif simg is not None and not didOutput:
 		print 'WARN: No output captured.  I\'m assuming you want to show the result, so here goes.'
 		img=simg[0].renderImage()
 		img.show()

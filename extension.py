@@ -16,30 +16,37 @@ class ExtensionLayer(ImageLayer):
 
 	@property
 	def type(self):
+		"""
+		the type for the extension
+		"""
 		return self._getProperty('type')
-		
+
 	@property
 	def extensionClass(self):
 		"""
 		get the external extension class or None
 		"""
-		extPkgName=self.type.replace('.'.'_')
+		extPkgName=self.type.replace('.','_')
 		try:
 			exec('import extensions.'+extPkgName)
 			return eval('extensions.'+extPkgName+'Extension')
-		except ImportError,e:
+		except ImportError:
 			pass
-		
+
 	@property
 	def image(self):
+		"""
+		get the layer's image
+		"""
 		extensionClass=self.extensionClass
-		if extensionClass==None:
+		if extensionClass is None:
 			image=ImageLayer.image
 		else:
 			ext=extensionClass(self.docRoot,self,self.xml)
 			image=ext.image
 			self.docRoot.saveImage(image,self.file)
 		return image
+
 
 if __name__ == '__main__':
 	import sys

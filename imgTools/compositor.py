@@ -18,7 +18,7 @@ from resizing import *
 def adjustOpacity(image,amount=1.0):
 	"""
 	Adjust the total opacity of an image
-	
+
 	image: the image to be changed
 	amount: 1.0=fully opaque 0.0=fully transparent
 
@@ -26,9 +26,9 @@ def adjustOpacity(image,amount=1.0):
 
 	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
 	"""
-	if image==None or amount==1.0:
+	if image is None or amount==1.0:
 		return image
-	if hasattr(image,'immutable') and image.immutable==True:
+	if hasattr(image,'immutable') and image.immutable:
 		image=image.copy()
 	alpha=image.split()[3]
 	alpha=ImageEnhance.Brightness(alpha).enhance(amount)
@@ -151,29 +151,28 @@ def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=Tru
 	tokenizer=re.compile(r"([!<>=|&]+|[,()%*-+/])")
 	equation=tokenizer.split(equation)
 	replacements={
-		'min':'np.minimum','max':'np.maximum',
-		'abs':'np.abs','sqrt':'np.sqrt','pow':'np.pow',
-		'count':'np.count','sum':'np.sum',
-		'sin':'np.sin','cos':'np.cos','tan':'np.tan',
-		'if':'np.where',
-		'top.RGBA':'topRGBA[:,:,:]','top.RGB':'topRGBA[:,:,:3]','top.R':'topRGBA[:,:,0]','top.R':'topRGBA[:,:,1]','top.R':'topRGBA[:,:,2]','top.A':'topRGBA[:,:,3]',
-		'top.CMYK':'topCMYK[:,:,:]','top.CMY':'topCMYK[:,:,:3]','top.C':'topCMYK[:,:,0]','top.M':'topCMYK[:,:,1]','top.Y':'topCMYK[:,:,2]','top.K':'topCMYK[:,:,3]',
-		'top.HSV':'topHSV[:,:,:]','top.H':'topHSV[:,:,0]','topS':'topHSV[:,:,1]','topV':'topHSV[:,:,2]',
-		'bottom.RGBA':'bottomRGBA[:,:,:]','bottom.RGB':'bottomRGBA[:,:,:3]','bottom.R':'bottomRGBA[:,:,0]','bottom.R':'bottomRGBA[:,:,1]','bottom.R':'bottomRGBA[:,:,2]','bottom.A':'bottomRGBA[:,:,3]',
-		'bottom.CMYK':'bottomCMYK[:,:,:]','bottom.CMY':'bottomCMYK[:,:,:3]','bottom.C':'bottomCMYK[:,:,0]','bottom.M':'bottomCMYK[:,:,1]','bottom.Y':'bottomCMYK[:,:,2]','bottom.K':'bottomCMYK[:,:,3]',
-		'bottom.HSV':'bottomHSV[:,:,:]','bottom.H':'bottomHSV[:,:,0]','bottom.S':'bottomHSV[:,:,1]','bottom.V':'bottomHSV[:,:,2]',
-	}
-	for i in range(len(equation)):
-		if len(equation[i])>0 and equation[i][0] not in r'0123456789,()%*-+/!<>=|&':
-			if equation[i] not in replacements:
-				raise Exception('ERR: illegal value in equation "'+equation[i]+'"')
-			equation[i]=replacements[equation[i]]
+			'min':'np.minimum','max':'np.maximum',
+			'abs':'np.abs','sqrt':'np.sqrt','pow':'np.pow',
+			'count':'np.count','sum':'np.sum',
+			'sin':'np.sin','cos':'np.cos','tan':'np.tan',
+			'if':'np.where',
+			'top.RGBA':'topRGBA[:,:,:]','top.RGB':'topRGBA[:,:,:3]','top.R':'topRGBA[:,:,0]','top.G':'topRGBA[:,:,1]','top.B':'topRGBA[:,:,2]','top.A':'topRGBA[:,:,3]',
+			'top.CMYK':'topCMYK[:,:,:]','top.CMY':'topCMYK[:,:,:3]','top.C':'topCMYK[:,:,0]','top.M':'topCMYK[:,:,1]','top.Y':'topCMYK[:,:,2]','top.K':'topCMYK[:,:,3]',
+			'top.HSV':'topHSV[:,:,:]','top.H':'topHSV[:,:,0]','topS':'topHSV[:,:,1]','topV':'topHSV[:,:,2]',
+			'bottom.RGBA':'bottomRGBA[:,:,:]','bottom.RGB':'bottomRGBA[:,:,:3]','bottom.R':'bottomRGBA[:,:,0]','bottom.G':'bottomRGBA[:,:,1]','bottom.B':'bottomRGBA[:,:,2]','bottom.A':'bottomRGBA[:,:,3]',
+			'bottom.CMYK':'bottomCMYK[:,:,:]','bottom.CMY':'bottomCMYK[:,:,:3]','bottom.C':'bottomCMYK[:,:,0]','bottom.M':'bottomCMYK[:,:,1]','bottom.Y':'bottomCMYK[:,:,2]','bottom.K':'bottomCMYK[:,:,3]',
+			'bottom.HSV':'bottomHSV[:,:,:]','bottom.H':'bottomHSV[:,:,0]','bottom.S':'bottomHSV[:,:,1]','bottom.V':'bottomHSV[:,:,2]',
+		}
+	for i,val in enumerate(equation):
+		if len(val)>0 and val[0] not in r'0123456789,()%*-+/!<>=|&':
+			if val not in replacements:
+				raise Exception('ERR: illegal value in equation "'+val+'"')
+			equation[i]=replacements[val]
 	equation='('+(''.join(equation))+')'
-	print equation
 	# run the operation and join the results with dstack()
 	final=None
 	for channelSet in eval(equation):
-		if type(final)==type(None):
+		if final is None:
 			final=channelSet
 		else:
 			final=np.dstack((final,channelSet))
@@ -184,7 +183,7 @@ def generalBlend(topImage,mathStr,botImage,opacity=1.0,position=(0,0),resize=Tru
 		final=cmyk_to_rgb(final)
 	final=final*shift
 	# if alpha channel was missing, add one
-	if len(final[0][1]<4):
+	if len(final[0][1])<4:
 		# calculate the alpha channel
 		comp_alpha=np.maximum(np.minimum(topRGBA[:,:,3],botRGBA[:,:,3])*opacity,shift)
 		new_alpha=topRGBA[:,:,3]+(1.0-topRGBA[:,:,3])*comp_alpha
@@ -416,14 +415,14 @@ def composite(image,overImage,opacity=1.0,blendMode='normal',mask=None,position=
 
 	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
 	"""
-	if image==None or opacity<=0.0:
+	if image is None or opacity<=0.0:
 		return overImage
-	if overImage==None:
-		if type(image)==np.ndarray:
+	if overImage is None:
+		if isinstance(image,np.ndarray):
 			size=(int(image.shape[0]+position[0]),int(image.shape[1]+position[1]))
 		else:
 			size=(int(image.width+position[0]),int(image.height+position[1]))
-		if (opacity==1.0 and mask==None and position==(0,0)) or size[0]<=0 or size[1]<=0:
+		if (opacity==1.0 and mask is None and position==(0,0)) or size[0]<=0 or size[1]<=0:
 			# there is nothing to change
 			return image
 		else:
@@ -471,7 +470,7 @@ if __name__ == '__main__':
 					custom=arg[1]
 				elif arg[0]=='--save':
 					print 'Compositing'
-					if custom==None:
+					if custom is None:
 						final=composite(img1,img2,opacity,blendMode,mask)
 					else:
 						final=generalBlend(img1,custom,img2,opacity,position=(0,0),resize=True)
@@ -480,7 +479,7 @@ if __name__ == '__main__':
 					print 'Done'
 				elif arg[0]=='--show':
 					print 'Compositing'
-					if custom==None:
+					if custom is None:
 						final=composite(img1,img2,opacity,blendMode,mask)
 					else:
 						final=generalBlend(img1,custom,img2,opacity,position=(0,0),resize=True)
@@ -493,7 +492,7 @@ if __name__ == '__main__':
 				else:
 					print 'ERR: unknown argument "'+arg[0]+'"'
 			else:
-				if img1==None:
+				if img1 is None:
 					img1=Image.open(arg)
 					print 'Loaded image A: '+arg
 				else:

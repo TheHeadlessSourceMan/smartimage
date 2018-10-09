@@ -3,6 +3,13 @@
 """
 Defines color gradients and gives the ability to apply them.
 """
+try:
+	# first try to use bohrium, since it could help us accelerate
+	# https://bohrium.readthedocs.io/users/python/
+	import bohrium as np
+except ImportError:
+	# if not, plain old numpy is good enough
+	import numpy as np
 
 GRADIENT_BLACK_TO_WHITE=[(0.0,(0.0,0.0,0.0)),(1.0,(1.0,1.0,1.0))]
 GRADIENT_CLEAR_TO_WHITE=[(0.0,(1.0,1.0,1.0,0.0)),(1.0,(1.0,1.0,1.0,1.0))]
@@ -14,23 +21,23 @@ def colormap(img,colors=None):
 	"""
 	apply the colors to a grayscale image
 	if a color image is provided, convert it (thus, acts like a "colorize" function)
-	
+
 	:param img:  a grayscale image
-	:param colors:  [(decimalPercent,color),(...)] 
+	:param colors:  [(decimalPercent,color),(...)]
 		if no colors are given, then [(0.0,black),(1.0,white)]
 		if a single color and no percent is given, assume [(0.0,black),(0.5,theColor),(1.0,white)]
-	
+
 	:return: the resulting image
 	"""
 	img=grayscale(img)
 	if not isFloat(img):
 		img=img/255.0
-	if type(colors)==type(None):
+	if colors is None:
 		colors=[(0.0,(0.0,0.0,0.0)),(1.0,(1.0,1.0,1.0))]
 	elif type(colors[0]) not in [tuple,list,np.ndarray]:
 		white=[]
 		black=[]
-		if type(colors) in [str,unicode]:
+		if isinstance(colors,basestring):
 			colors=strToColor(colors)
 		if isFloat(colors):
 			imax=1.0
@@ -38,7 +45,7 @@ def colormap(img,colors=None):
 		else:
 			imax=255
 			imin=0
-		for i in range(len(colors)):
+		for _ in range(len(colors)):
 			white.append(imax)
 			black.append(imin)
 		if len(colors) in [2,4]: # keep same alpha value
@@ -55,7 +62,7 @@ def colormap(img,colors=None):
 	if True:
 		lastColor=None
 		for color in colors:
-			if lastColor==None:
+			if lastColor is None:
 				img2+=color[1]
 			else:
 				percent=(img-lastColor[0])*lastColor[0]/color[0]
@@ -67,7 +74,7 @@ def colormap(img,colors=None):
 			lastColor=None
 			for color in colors:
 				if c<color[0]:
-					if lastColor==None:
+					if lastColor is None:
 						return color[1]
 					else:
 						percent=(c-lastColor[0])/color[0]

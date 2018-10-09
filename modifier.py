@@ -3,16 +3,9 @@
 """
 This is a modifier layer such as blur, sharpen, posterize, etc
 """
-try:
-	# first try to use bohrium, since it could help us accelerate
-	# https://bohrium.readthedocs.io/users/python/
-	import bohrium as np
-except ImportError:
-	# if not, plain old numpy is good enough
-	import numpy as np
+from PIL import ImageFilter, ImageOps, ImageEnhance
 from layer import *
 from imgTools import *
-from PIL import ImageFilter, ImageOps, ImageEnhance
 
 
 class Modifier(Layer):
@@ -37,7 +30,7 @@ class Modifier(Layer):
 		supported types:
 			brightness,contrast,rotate,sharpen,unsharp_mask
 		"""
-		return _getPropertyPercent('amount',1.0)
+		return self._getPropertyPercent('amount',1.0)
 
 	@property
 	def edge(self):
@@ -48,7 +41,7 @@ class Modifier(Layer):
 		useful for:
 			convolve, expand_border, others?
 		"""
-		return _getProperty('edge','mirror')
+		return self._getProperty('edge','mirror')
 
 	@property
 	def add(self):
@@ -59,7 +52,7 @@ class Modifier(Layer):
 		useful for:
 			convolve
 		"""
-		return float(_getProperty('add',0))
+		return float(self._getProperty('add',0))
 
 	@property
 	def divide(self):
@@ -69,7 +62,7 @@ class Modifier(Layer):
 		useful for:
 			convolve
 		"""
-		divide=float(_getProperty('divide',0))
+		divide=float(self._getProperty('divide',0))
 		if divide==0:
 			divide=None
 		return divide
@@ -83,7 +76,7 @@ class Modifier(Layer):
 			convolve
 		"""
 		ret=[]
-		property=_getProperty('matrix','[[0,0,0],[0,1,0],[0,0,0]]').replace(' ','')
+		property=self._getProperty('matrix','[[0,0,0],[0,1,0],[0,0,0]]').replace(' ','')
 		if property.startswith('[['):
 			matrix=property[1:-1]
 		else:
@@ -92,7 +85,7 @@ class Modifier(Layer):
 		size=None
 		for row in matrix:
 			row=row.split(']',1)[0].split(',')
-			if (size==None and len(row) not in [5,3]) or size!=len(row):
+			if (size is None and len(row) not in [5,3]) or size!=len(row):
 				size=len(row)
 				raise Exception('Convolution matrix "'+property+'" is not 3x3 or 5x5!')
 			ret.append([float(v) for v in row])
@@ -108,7 +101,7 @@ class Modifier(Layer):
 		useful for:
 			convolve,others?
 		"""
-		return _getProperty('channels','rgba').lower()
+		return self._getProperty('channels','rgba').lower()
 
 	@property
 	def modifierOpacity(self):
@@ -134,6 +127,9 @@ class Modifier(Layer):
 		return float(self._getProperty('threshold',0))
 
 	def roi(self,image):
+		"""
+		the region of interest
+		"""
 		type=self.type
 		# only certain transforms change the region of interest
 		if self.type in ['shadow','blur','flip','mirror']:
@@ -224,7 +220,7 @@ class Modifier(Layer):
 		WARNING: Do not modify the image without doing a .copy() first!
 		"""
 		opacity=self.opacity
-		if opacity<=0.0 or self.visible==False:
+		if opacity<=0.0 or not self.visible:
 			return None
 		image=self._transform(Layer.renderImage(self,renderContext).copy())
 		if self.opacity<1.0:

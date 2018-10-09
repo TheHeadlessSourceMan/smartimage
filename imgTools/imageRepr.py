@@ -1,9 +1,10 @@
 #!/usr/bin/env
 # -*- coding: utf-8 -*-
 """
-This allows easy conversion between pil images, numpy arrays, and filenames, int/float 
+This allows easy conversion between pil images, numpy arrays, and filenames, int/float
 all of different numbers of color channels
 """
+import os
 try:
 	# first try to use bohrium, since it could help us accelerate
 	# https://bohrium.readthedocs.io/users/python/
@@ -26,14 +27,14 @@ def defaultLoader(f):
 		http://
 		https://
 	"""
-	if isinstance(f,np.ndarray) or isinstance(f,Image.Image):
+	if isinstance(f,(np.ndarray,Image.Image)):
 		return f
-	if f==None:
+	if f is None:
 		return Image.new('RGBA',(1,1),(255,255,255,0))
-	if type(f) in [str,unicode]:
+	if isinstance(f,basestring):
 		proto=f.split('://',1)
 		if len(proto)>2 and proto.find('/')<0:
-			if proto[0]=='file':	
+			if proto[0]=='file':
 				f=proto[-1]
 				if os.sep!='/':
 					f=f.replace('/',os.sep)
@@ -54,23 +55,23 @@ def defaultLoader(f):
 def numpyArray(img,floatingPoint=True,loader=None):
 	"""
 	always return a writeable ndarray
-	
+
 	if img is a pil image, convert it.
 	if it's already an array, return it
-	
+
 	:param img: can be a pil image, a numpy array, or anything loader can load
 	:param floatingPoint: return a float array vs return a byte array
 	:param loader: return a tool used to load images from strings.  if None, use defaultLoader() in this file
 	"""
-	if type(img) in [str,unicode] or hasattr(img,'read'):
+	if isinstance(img,basestring) or hasattr(img,'read'):
 		if loader==None:
 			loader=defaultLoader
 		img=loader(img)
-	if type(img)==np.ndarray:
+	if isinstance(img,np.ndarray):
 		a=img
 	else:
 		a=np.asarray(img)
-	if a.flags.writeable==False:
+	if not a.flags.writeable:
 		a=a.copy()
 	if isFloat(a)!=floatingPoint:
 		if floatingPoint:
@@ -78,20 +79,20 @@ def numpyArray(img,floatingPoint=True,loader=None):
 		else:
 			a=np.int(a*255)
 	return a
-	
-	
+
+
 def pilImage(img,loader=None):
 	"""
 	converts anything to a pil image
-	
+
 	:param img: can be a pil image, loadable file path, or a numpy array
 	"""
 	if isinstance(img,Image.Image):
 		# already what we need
 		pass
-	elif type(img) in [str,unicode] or hasattr(img,'read'):
+	elif isinstance(img,basestring) or hasattr(img,'read'):
 		# load it with the loader
-		if loader==None:
+		if loader is None:
 			loader=defaultLoader
 		img=loader(img)
 	else:
@@ -103,35 +104,35 @@ def pilImage(img,loader=None):
 			img=np.round(img*255)
 		img=Image.fromarray(img.astype('uint8'),mode)
 	return img
-	
+
 
 #-------------- color mode/info
 
 def imageMode(img):
 	"""
 	:param img: can either one be a textual image mode, numpy array, or an image
-	
+
 	:return bool:
 	"""
-	if type(img)==str:
+	if isinstance(img,basestring):
 		return img
-	elif type(img)==np.ndarray:
+	elif isinstance(img,np.ndarray):
 		if len(img.shape)<3: # black and white is [x,y,val] not [x,y,[val]]
 			return 'L'
 		modeGuess=['L','LA','RGB','RGBA']
 		return modeGuess[img.shape[2]-1]
 	return img.mode
-	
-	
+
+
 def isFloat(img):
 	"""
 	Decide whether image pixels or an individual color is floating point or byte
-	
+
 	:param img: can either one be a numpy array, or an image
-	
+
 	:return bool:
 	"""
-	if type(img)==np.ndarray:
+	if isinstance(img,np.ndarray):
 		if len(img.shape)<2: # a single color
 			if type(img[0]) in [np.float,np.float64]:
 				return True
@@ -149,30 +150,30 @@ def isFloat(img):
 		return True
 	return False
 
-	
+
 def hasAlpha(mode):
 	"""
 	determine if an image mode is has an alpha channel
-	
+
 	:param mode: can either one be a textual image mode, numpy array, or an image
 	:return bool:
 	"""
-	if type(mode)!=str:
+	if isinstance(mode,basestring):
 		mode=imageMode(mode)
 	return mode[-1]=='A'
-	
-	
+
+
 def getAlpha(image,alwaysCreate=True):
 	"""
 	gets the alpha channel regardless of image type
-	
+
 	:param image: the image whose mask to get
 	:param alwaysCreate: always returns a numpy array (otherwise, may return None)
-	
+
 	:return: alpha channel as a PIL image, or numpy array, or possibly None, depending on alwaysCreate
 	"""
 	ret=None
-	if type(image)==type(None) or not hasAlpha(image):
+	if image is None or not hasAlpha(image):
 		if alwaysCreate:
 			ret=np.array(getSize(image))
 			ret.fill(1.0)
@@ -181,8 +182,8 @@ def getAlpha(image,alwaysCreate=True):
 	else:
 		ret=image[:,:,-1]
 	return ret
-	
-	
+
+
 def setAlpha(image,alpha):
 	"""
 	sets the alpha mask regardless of image type
@@ -193,22 +194,22 @@ def setAlpha(image,alpha):
 		-or-
 		grayscale (white=opaque, black=transparent)
 
-	:returns: adjusted image (could be PIL image or numpy array, depending on 
+	:returns: adjusted image (could be PIL image or numpy array, depending on
 		what's expedient.  If you need a particular one, wrap the call in pilImage() or numpyArray())
-	
+
 	NOTE: if alpha channel exists, will be darkened such that
 		a hole in either mask results in a hole
-		
+
 	IMPORTANT: the image bits may be altered.  To prevent this, set image.immutable=True
 	"""
-	if type(image)==type(None) or type(alpha)==type(None): # comparing directly to None does unhappy things with numpy arrays
+	if image is None or alpha is None:
 		return image
 	if isinstance(image,Image.Image): # make sure not to smash any bits we're keeping
-		if hasattr(image,'immutable') and image.immutable==True:
+		if hasattr(image,'immutable') and image.immutable:
 			image=image.copy()
 	if imageMode(alpha)!='L':
 		alpha=getAlpha(alpha,alwaysCreate=False) # make sure we have a grayscale to combine
-		if type(alpha)==type(None):
+		if alpha is None:
 			return image
 	image,alpha=makeSameSize(image,alpha,(0,0,0,0))
 	if hasAlpha(image):
@@ -230,15 +231,15 @@ def setAlpha(image,alpha):
 def isColor(mode):
 	"""
 	determine if an image mode is color (or grayscale)
-	
+
 	:param mode: can either one be a textual image mode, numpy array, or an image
 	:return bool:
 	"""
-	if type(mode)!=str:
+	if not isinstance(mode,basestring):
 		mode=imageMode(mode)
 	return mode[0]!='L'
-	
-	
+
+
 def maxMode(mode1,mode2='L',requireAlpha=False):
 	"""
 	Finds the maximum color mode.
@@ -257,23 +258,23 @@ def maxMode(mode1,mode2='L',requireAlpha=False):
 		ret=ret+'A'
 	return ret
 
-	
+
 def changeMode(img,mode):
 	"""
 	changes the image to a different color mode
 	"""
 	curmode=imageMode(img)
 	if curmode!=mode:
-		if type(img)==np.ndarray:
-			# TODO: this would be faster to do in array-land, but I'm too lazy to 
+		if isinstance(img,np.ndarray):
+			# TODO: this would be faster to do in array-land, but I'm too lazy to
 			#	mess with the if/then spaghetti required for that.
 			img=pilImage(img)
 			img=img.convert(mode)
 		else:
 			img=img.convert(mode)
 	return img
-	
-	
+
+
 def makeSameMode(images):
 	"""
 	takes an array of images, returns an array of images
@@ -293,7 +294,7 @@ def makeSameMode(images):
 		images=[changeMode(img,maxmode) for img in images]
 	return images
 
-	
+
 if __name__ == '__main__':
 	import sys
 	# Use the Psyco python accelerator if available
