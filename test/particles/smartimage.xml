@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartimage>
+	
+	<particles w="256" h="256" randomize="r=-45..45" qty="20" seed="169828374">
+		<image src="gimp_pepper.png" rotation="@r" />
+	</particles>
+	
+</smartimage>

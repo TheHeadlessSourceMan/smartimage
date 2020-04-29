@@ -19,16 +19,16 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         self.dut=SmartImage()
-        
+
     def tearDown(self):
         pass
-        
+
     def testName(self):
         self.dut.load(__HERE__)
         self.dut.save(__HERE__+'actualOutput.png')
         assert self.dut.compareOutput(__HERE__+'desiredOutput.png')
 
-        
+
 def testSuite():
     """
     Combine unit tests into an entire suite
@@ -36,13 +36,10 @@ def testSuite():
     testSuite = unittest.TestSuite()
     testSuite.addTest(Test("testName"))
     return testSuite
-        
-        
+
+
 if __name__ == '__main__':
     """
     Run all the test suites in the standard way.
     """
     unittest.main()
-
-
-

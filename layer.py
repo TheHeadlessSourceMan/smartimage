@@ -329,7 +329,7 @@ class Layer(SmartimageXmlObject,Bounds):
             img=self.root.imageByRef(ref)
         except FileNotFoundError as e:
             raise SmartimageError(self,'Missing roi resource "%s"'%e.filename)
-        return ref
+        return img
 
     @property
     def normalMap(self)->Union[PilPlusImage,None]:

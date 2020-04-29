@@ -20,6 +20,7 @@ TESTS=[
     #'link_image_size',
     'mask_rice',
     'modifier_rice',
+    'particles',
     'procedural_textures', # uses same random seed so it can be compared
     'psychadellicGimpColors',
     #'grayscale_tests',

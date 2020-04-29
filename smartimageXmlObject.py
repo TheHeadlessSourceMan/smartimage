@@ -17,6 +17,7 @@ class SmartimageXmlObject(XmlBackedObject):
             raise Exception()
         XmlBackedObject.__init__(self,parent,None,xml)
         self.elementId=XmlBackedValue(self,'id',default=self.root.getNextId)
+        self._variables={}
 
     @property
     def name(self)->str:
@@ -51,6 +52,12 @@ class SmartimageXmlObject(XmlBackedObject):
         """
         get the value of the variable
         """
+        if name in self._variables:
+            return self._variables[name]
+        if self.parent is not None:
+            val=self.parent.getVariableValue(name)
+            if val is not None:
+                return val
         val=self.root.getLayer(name)
         if val is None:
             return None
@@ -58,9 +65,9 @@ class SmartimageXmlObject(XmlBackedObject):
 
     def _dereference(self,name:str,nameHint='',default=None,nofollow=None):
         """
+        :param name: the name to dereference
         :param nameHint: the attribute in the original object that we got name from
             (or '_' = text contents)
-        :param name: the name to dereference
         """
         newVal=name
         xob=None

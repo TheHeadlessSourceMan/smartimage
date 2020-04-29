@@ -19,22 +19,6 @@ class RenderingContext:
         self.cur:Bounds=Bounds(0,0,0,0)
         self.cur_image:Union[PIL.Image.Image,None]=None
         self.visitedLayers:Set['Layer']=set()
-        self.variableContexts:List[dict]=[] # an array of dicts
-
-    def getVariableValue(self,name:str):
-        """
-        get the current value of a variable
-        """
-        for contextId in range(len(self.variableContexts),0):
-            if name in self.variableContexts[contextId]:
-                return self.variableContexts[contextId][name]
-        return None
-
-    def setVariableValue(self,name:str,value)->NoReturn:
-        """
-        set the current value of a variable
-        """
-        self.variableContexts[-1][name]=value
 
     def log(self,*vals)->NoReturn:
         """
@@ -52,10 +36,9 @@ class RenderingContext:
         # loop prevention
         if layer.elementId in self.visitedLayers:
             info=(layer.elementId,layer.name)
-            raise SmartimageError(self,'Link loop with layer %s "%s"'%info)
+            raise SmartimageError(layer,'Link loop with layer %s "%s"'%info)
         self.visitedLayers.add(layer.elementId)
         # push a new variable context
-        self.variableContexts.append({})
         # do we need to do anything?
         opacity=layer.opacity
         if opacity<=0.0 or not layer.visible:
@@ -88,5 +71,4 @@ class RenderingContext:
         self.log('finished',layer.name)
         # pop off tracking info for this layer
         self.visitedLayers.pop()
-        del self.variableContexts[-1]
         return image

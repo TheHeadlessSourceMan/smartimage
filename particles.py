@@ -16,16 +16,27 @@ class Particles(Layer):
         Layer.__init__(self,parent,xml)
 
     @property
-    def randomize(self)->NoReturn:
+    def randomize(self)->dict:
         """
-        randomize the particle locations
+        additional randomizers from the file
+
+        :return: a dict of child values to be randomized, where each can be
+            a) a maximum float value
+            b) a 2-tuple range of float values
+            c) a list of choices
         """
         randies={}
-        for r in self._getProperty('randomize','').split(','):
-            r=[kv.strip() for kv in r.split('=',1)]
-            if r[1].find('|')>=0:
-                r[1]=r[1].split('|')
-            randies[r[0]]=r[1]
+        for kv in self._getProperty('randomize','').split(','):
+            kv=kv.strip()
+            if kv=='':
+                continue
+            kv=[item.strip() for item in kv.split('=',1)]
+            if kv[1].find('..')>=0:
+                kv[1]=kv[1].split('..')
+                kv[1]=(kv[1][0],kv[1][1])
+            elif kv[1].find('|'):
+                kv[1]=kv[1].split('|')
+            randies[kv[0]]=kv[1]
         return randies
 
     @property
@@ -41,9 +52,14 @@ class Particles(Layer):
     @property
     def dispersionMap(self)->Union[PilPlusImage,None]:
         """
-        an image to define where particles can land
+        an image to define where particles are more likely to land
         """
-        self._getImageProperty('dispersionMap')
+        ref=self._getProperty('dispersionMap')
+        try:
+            img=self.root.imageByRef(ref)
+        except FileNotFoundError as e:
+            raise SmartimageError(self,'Missing dispersionMap resource "%s"'%e.filename)
+        return img
 
     @property
     def qty(self)->int:
@@ -52,28 +68,74 @@ class Particles(Layer):
         """
         return int(self._getProperty('qty','1'))
 
-    def nextRandomSet(self)->List[Tuple[float,float]]:
+    def randomizedValues(self,valsToRandomize:Dict[str,Union[float,Tuple[float,float],
+        List[str]]]=None)->Dict[str,Union[str,float]]:
         """
-        Returns the next set of randomize values
-        """
-        values={}
-        for k,v in list(self.randomize.items()):
-            if isinstance(v,list):
-                v=random.choice(v,seed=self.seed)
-            v=v.split('..',1)
-            if v:
-                v=random.uniform(float(v[0]),v[1],seed=self.seed)
-            values[k]=v
-        return values
+        Selects a set of randomized values
 
-    @property
-    def image(self)->Union[PilPlusImage,None]:
+        :valsToRandomize: a dict of key,values to randomize where each value can be
+            a) a maximum float value
+            b) a 2-tuple range of float values
+            c) a list of choices
         """
-        Image generated from random particles
+        vals={}
+        if valsToRandomize is None:
+            return vals
+        for k,v in valsToRandomize.items():
+            if isinstance(v,list): # choice
+                v=random.choice(v)
+            elif isinstance(v,tuple): # range
+                v=random.uniform(float(v[0]),float(v[1]))
+            else: # max value only
+                v=random.uniform(0.0,float(v))
+            vals[k]=v
+        return vals
+
+    def renderImage(self,renderContext:RenderingContext=None)->Union[PilPlusImage,None]:
         """
-        for i in range(self.qty):
-            variables=self.nextRandomSet()
-            child=random.choice(self.children,seed=self.seed)
-            # TODO: Need to re-set the local variables and draw each child layer
-            raise NotImplementedError()
-        return img
+        render this layer to a final image
+
+        renderContext - used to keep track for child renders
+            (Used internally, so no need to specify this)
+
+        WARNING: Do not modify the image without doing a .copy() first!
+        """
+        image=None
+        if self.root.cacheRenderedLayers and not self.dirty:
+            if self._lastRenderedImage is not None:
+                return self._lastRenderedImage
+        if renderContext is None:
+            renderContext=RenderingContext()
+        if self.seed is not None: # set the random seed if necessary
+            random.seed(self.seed)
+        valsToRandomize=self.randomize
+        locations=self.dispersionMap
+        if locations is not None:
+            locations=np.argsort(self.dispersionMap.ndarray)
+        # keep a layer variable backup
+        varBak=self._variables.copy()
+        for _ in range(self.qty):
+            # pick what we are drawing
+            childLayer=random.choice(self.children)
+            # randomize its values
+            if valsToRandomize:
+                #childLayer.dirty=True
+                for k,v in self.randomizedValues(valsToRandomize).items():
+                    self._variables[k]=v
+            # randomize the location
+            dispersionMap=self.dispersionMap
+            if dispersionMap is None:
+                childLayer.x=int(random.random()*(self.w-1))
+                childLayer.y=int(random.random()*(self.h-1))
+            else:
+                pick=abs(int(random.random()*len(location)-random.random()*len(location)))
+                location=locations[pick]
+                childLayer.x=int(location[0])
+                childLayer.y=int(location[1])
+            # now draw it
+            childImage=childLayer.renderImage(renderContext)
+            image=composite(childImage,image,
+                opacity=childLayer.opacity,blendMode=childLayer.blendMode,mask=childLayer.mask,
+                position=childLayer.location,resize=True)
+        self._variables=varBak
+        return image
