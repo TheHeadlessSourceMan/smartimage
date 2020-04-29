@@ -1,0 +1,22 @@
+<smartimage>
+	<!-- streak colors in a given direction -->
+	
+	<plugin name="streaks">
+	<form>
+		<color name="colorSelect" value="#000000"/>
+		<numeric name="threshold" value="0.1"/>
+		<numeric name="streakLength" value="30"/>
+		<angle name="streakDirection" value="0"/>
+		<numeric name="streakColorBlend" value="0.0"/>
+		<color name="streakColor" value="#c55e1c"/> <!-- default is a rust color -->
+	</form>
+	<modifier type="pixelMove" location="(avg(@image.RGB-colorSelect)>@threshold)?
+			@image.xy+pol2cart(@streakDirection,@streakLength):
+			@image.xy">
+		<image src="(avg(@image.RGB-colorSelect)>@threshold)?
+					streakColor*streakColorBlend+@image.RGB*(1-streakColorBlend):
+					@image.RGB" />
+	</modifier>
+	<image src="@image" />
+	</plugin>
+</smartimage>

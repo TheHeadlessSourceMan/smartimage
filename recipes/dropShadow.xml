@@ -1,0 +1,19 @@
+<smartimage>
+	<!-- add a drop shadow to an image -->
+	<plugin id="dropShadow">
+		<form>
+			<numeric name="xoffs" value="10" />
+			<numeric name="yoffs" value="10" />
+			<numeric name="blur" value="10" />
+			<numeric name="color" value="#000000ff" />
+		</form>
+		<image src="@image"/>
+		<modifier type="gaussian_blur" size="@blur">
+			<image src="RGBA=
+				@image.A*@color.R,
+				@image.A*@color.G,
+				@image.A*@color.B,
+				@image.A*@color.A" x="@xoffs" y="@yoffs"/>
+		</modifier>
+	</plugin>
+</smartimage>

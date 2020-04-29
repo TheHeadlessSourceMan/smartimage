@@ -17,9 +17,9 @@ class Extension(object):
 		
 	@property
 	def image(self):
-		print self.__file__
-		print '='*len(self.__file__)
-		print lxml.etree.toString(xml)
+		print(self.__file__)
+		print('='*len(self.__file__))
+		print(lxml.etree.toString(xml))
 		return None
 
 
@@ -43,11 +43,11 @@ if __name__ == '__main__':
 				if arg[0] in ['-h','--help']:
 					printhelp=True
 				else:
-					print 'ERR: unknown argument "'+arg[0]+'"'
+					print('ERR: unknown argument "'+arg[0]+'"')
 			else:
-				print 'ERR: unknown argument "'+arg+'"'
+				print('ERR: unknown argument "'+arg+'"')
 	if printhelp:
-		print 'Usage:'
-		print '  com.smartimage.testExtension.py [options]'
-		print 'Options:'
-		print '   NONE'
+		print('Usage:')
+		print('  com.smartimage.testExtension.py [options]')
+		print('Options:')
+		print('   NONE')

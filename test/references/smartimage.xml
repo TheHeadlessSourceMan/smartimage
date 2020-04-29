@@ -1,8 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <smartimage>
 	<form name="x">
-		<variable type="hidden" name="text1">BAD text 1</variable>
-		<variable type="hidden" id="text1">text 1</variable>
-		<variable type="hidden" id="text2">text 2</variable>
+		<text type="hidden" name="text1">BAD text 1</text>
+		<text type="hidden" id="text1">text 1</text>
+		<text type="hidden" id="text2">text 2</text>
 	</form>
 	<text y="0" w="200" name="Test Layer 1">@text1</text>
 	<text y="25" w="200" name="Test Layer 2">@text2</text>

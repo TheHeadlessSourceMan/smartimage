@@ -2,7 +2,7 @@
 	<!-- compute a sobel transform -->
 	<!-- see also: https://en.wikipedia.org/wiki/Sobel_operator -->
 	<plugin name="sobel">
-		<children />
+		<image src="@image" />
 		<convolution>
 			[[ 1,0,-1],
 			 [ 2,0,-2],
@@ -14,4 +14,4 @@
 			 [-1,-2,-1]]
 		</convolution>
 	</plugin>
-<smartimage>
+</smartimage>

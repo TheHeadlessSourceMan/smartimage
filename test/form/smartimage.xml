@@ -1,5 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <smartimage>
-<form caption="My Form" help="help.html">
+	<form caption="My Form" help="help.html">
 	<preview showBelow="false" showAbove="#ff000088" />
 	<select name="" multiple="True" textEntry="True">
 		<option caption="value 1">1</option>

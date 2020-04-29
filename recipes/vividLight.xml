@@ -2,18 +2,18 @@
 	<!-- re-creation of the vividLight blend mode -->
 	
 	<plugin name="colorDodge"> <!-- implement colorDodge blend mode -->
-		<children blend="topRGB/(1.0-bottomRGB)" />
+		<image src="@top.RGB/(1.0-@bottom.RGB)" />
 	</plugin>
 
 	<plugin name="colorBurn"> <!-- implement colorBurn blend mode -->
-		<children blend="1.0-((1.0-topRGB)/bottomRGB)" />
+		<image src="1.0-((1.0-@top.RGB)/@bottom.RGB)" />
 	</plugin>
 
 	<plugin name="vividLight"> <!-- implement vividLight blend mode with other plugin calls -->
-		<children blend="np.where(topRGB>0.5,@colorDodge(bottomRGB,topRGB),@colorBurn(bottomRGB,topRGB))" />
+		<image src="np.where(@top.RGB>0.5,@colorDodge(@bottom.RGB,@top.RGB),@colorBurn(@bottom.RGB,@top.RGB))" />
 	</plugin>
 
 	<plugin name="vividLightU"> <!-- implement unrolled vividLight blend mode -->
-		<children blend="if(topRGB>0.5,topRGB/(1.0-bottomRGB),1.0-((1.0-topRGB)/bottomRGB))" />
+		<image src="if(@top.RGB>0.5,@top.RGB/(1.0-@bottom.RGB),1.0-((1.0-@top.RGB)/@bottom.RGB))" />
 	</plugin>
 </smartimage>

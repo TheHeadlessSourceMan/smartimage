@@ -11,13 +11,13 @@ def install():
 	HERE=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep
 	installed=False
 	for loc in LOCATIONS:
-		print os.path.exists(loc),loc
+		print(os.path.exists(loc),loc)
 		if os.path.exists(loc):
 			originalMode=os.stat(loc).st_mode
-			os.chmod(loc,0777)   
+			os.chmod(loc,0o777)   
 			for filename in os.listdir(HERE):
 				if filename.endswith('.py') and filename!='install.py':
-					print 'copying "'+HERE+filename+'" to "'+loc+'"'
+					print('copying "'+HERE+filename+'" to "'+loc+'"')
 					shutil.copyfile(HERE+filename,loc)
 					filename=loc+filename
 					run=False
@@ -26,7 +26,7 @@ def install():
 							run=True
 					if run:
 						out,_=subprocess.popen('python "'+filename+'"',stdout=subprocess.PIPE,stderr=subprocess.STDOUT).communicate()
-						print err.strip()
+						print(err.strip())
 			os.chmod(loc,originalMode)   
 			installed=True
 	return installed
@@ -52,14 +52,14 @@ if __name__ == '__main__':
 				if arg[0] in ['-h','--help']:
 					printhelp=True
 				else:
-					print 'ERR: unknown argument "'+arg[0]+'"'
+					print('ERR: unknown argument "'+arg[0]+'"')
 			else:
-				print 'ERR: unknown argument "'+arg+'"'
+				print('ERR: unknown argument "'+arg+'"')
 	if printhelp:
-		print 'Usage:'
-		print '  install.py [options]'
-		print 'Options:'
-		print '   NONE'
+		print('Usage:')
+		print('  install.py [options]')
+		print('Options:')
+		print('   NONE')
 	else:
 		if not install():
-			print "ERR: No gimp installation found!"
+			print("ERR: No gimp installation found!")

@@ -1,104 +1,97 @@
-#!/usr/bin/env
 # -*- coding: utf-8 -*-
 """
 A layer that contains an image
 """
-from imgTools import *
-from layer import *
+from typing import *
+import io
+from imageTools import *
+from smartimage.layer import *
+from smartimage.errors import SmartimageError
 
 
 class ImageLayer(Layer):
-	"""
-	A layer that contains an image
-	"""
+    """
+    A layer that contains an image
+    """
 
-	def __init__(self,docRoot,parent,xml):
-		Layer.__init__(self,docRoot,parent,xml)
+    def __init__(self,parent,xml='image'):
+        Layer.__init__(self,parent,xml)
 
-	@property
-	def roi(self):
-		"""
-		the region of interest of a graphical image
+    @property
+    def roi(self)->Union[PilPlusImage,None]:
+        """
+        the region of interest of a graphical image
 
-		if there is none, figure it out
-		"""
-		ref=self._getProperty('roi')
-		if ref!=None:
-			img=self.docRoot.imageByRef(ref)
-		else:
-			img=interest(self.image)
-		if img.size!=self.image.size:
-			img.resize(self.image.size)
-		return img
+        if there is none, figure it out
+        """
+        ref=self._getProperty('roi')
+        if ref is not None:
+            try:
+                img=self.root.imageByRef(ref)
+            except FileNotFoundError as e:
+                raise SmartimageError(self,'Missing roi resource "%s"'%e.filename)
+        else:
+            img=interest(self.image)
+        if img.size!=self.image.size:
+            img.resize(self.image.size)
+        return img
 
-	@property
-	def image(self):
-		"""
-		the image for this layer
-		"""
-		ref=self._getProperty('file')
-		img=self.docRoot.imageByRef(ref)
-		w=self._getProperty('w','auto')
-		h=self._getProperty('h','auto')
-		if (w not in ['0','auto']) and (h not in ['0','auto']):
-			if w in ['0','auto']:
-				w=img.width*(img.height/h)
-			elif h in ['0','auto']:
-				h=img.height*(img.width/w)
-			img=img.resize((int(w),int(h)),Image.ANTIALIAS)
-		if img!=None:
-			img.immutable=True # mark this image so that compositor will not alter it
-		return img
+    @property
+    def src(self)->Union[PilPlusImage,None,str]:
+        """
+        The source of the image.
 
-	@property
-	def w(self):
-		"""
-		get the width from the loaded image if not specified
-		"""
-		w=self._getProperty('w','auto')
-		if w in ['0','auto']:
-			w=self.image.size[0]
-		else:
-			w=float(w)
-		return w
-	@property
-	def h(self):
-		"""
-		get the height from the loaded image if not specified
-		"""
-		h=self._getProperty('h','auto')
-		if h in ['0','auto']:
-			h=self.image.size[1]
-		else:
-			h=float(h)
-		return h
+        Can be one of:
+            an internal filename
+            an external filename
+            a reference to another image
+        """
+        return self._getProperty('src')
+    @src.setter
+    def src(self,src):
+        self._setProperty('src',src)
 
-
-if __name__ == '__main__':
-	import sys
-	# Use the Psyco python accelerator if available
-	# See:
-	# 	http://psyco.sourceforge.net
-	try:
-		import psyco
-		psyco.full() # accelerate this program
-	except ImportError:
-		pass
-	printhelp=False
-	if len(sys.argv)<2:
-		printhelp=True
-	else:
-		for arg in sys.argv[1:]:
-			if arg.startswith('-'):
-				arg=[a.strip() for a in arg.split('=',1)]
-				if arg[0] in ['-h','--help']:
-					printhelp=True
-				else:
-					print 'ERR: unknown argument "'+arg[0]+'"'
-			else:
-				print 'ERR: unknown argument "'+arg+'"'
-	if printhelp:
-		print 'Usage:'
-		print '  modifier.py [options]'
-		print 'Options:'
-		print '   NONE'
+    @property
+    def image(self)->Union[PilPlusImage,None]:
+        """
+        the image for this layer
+        """
+        try:
+            img=self.root.imageByRef(self.src)
+        except FileNotFoundError as e:
+            raise SmartimageError(self,'Missing image src resource "%s"'%e.filename)
+        if img is None:
+            return img
+        w=self._getProperty('w','auto')
+        h=self._getProperty('h','auto')
+        if (w not in ['0','auto']) and (h not in ['0','auto']):
+            if w in ['0','auto']:
+                w=img.width*(img.height/h)
+            elif h in ['0','auto']:
+                h=img.height*(img.width/w)
+            img=img.resize((int(w),int(h)),img.ANTIALIAS)
+        if img is not None:
+            img.immutable=True # mark this image so that compositor will not alter it
+        return img
+    @image.setter
+    def image(self,image):
+        """
+        Can assign any PIL image or a filename that can be loaded as one
+        """
+        if image is None:
+            raise SmartimageError(self,'Attempt to assign None as an image')
+        if isinstance(image,str):
+            filename=image
+            image=PilPlusImage(filename)
+            imageFormat=image.format
+        elif image.format is not None:
+            filename=self.name+'.'+image.format.lower()
+            imageFormat=image.format
+        else:
+            filename=self.name+'.png'
+            imageFormat='PNG'
+        data=io.BytesIO()
+        image.save(data,imageFormat)
+        data=data.getvalue()
+        filename=self.root.addComponent(filename,data,overwrite=False)
+        self.src=filename

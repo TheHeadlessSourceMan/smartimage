@@ -6,7 +6,7 @@ Twiddle with svg filters
 See also:
 	https://www.w3.org/TR/2007/WD-SVGFilter12-20070501/#FilterPrimitivesOverview
 """
-from xmlBackedObject import XmlBackedObject
+from backedObject import SmartimageXmlBackedObject
 
 
 def sampleFilter():
@@ -98,7 +98,7 @@ def surfaceNormals(rgbArry,surfaceScale=1.0,FACTORx=1.0,FACTORy=1.0):
 	N = (Nx, Ny, Nz) / Norm((Nx,Ny,Nz))
 	return N
 
-class FilterPrimitive(XmlBackedObject):
+class FilterPrimitive(SmartimageXmlBackedObject):
 	"""
 	A feWhatever filter primitive tag
 	"""
@@ -129,7 +129,7 @@ class FilterPrimitive(XmlBackedObject):
 		'feCustom' ]
 		
 	def __init__(self,doc,parent,xml):
-		XmlBackedObject.__init__(self,doc,parent,xml)
+		SmartimageXmlBackedObject.__init__(self,doc,parent,xml)
 		if self.type not in self.PRIMITIVE_TYPES:
 			raise Exception('ERR: Unknown SVG filter primitive, "'+self.type+'"')
 		
@@ -147,13 +147,13 @@ class FilterPrimitive(XmlBackedObject):
 		return ret
 		
 
-class Filter(XmlBackedObject):
+class Filter(SmartimageXmlBackedObject):
 	"""
 	Twiddle with svg filters
 	"""
 		
 	def __init__(self,docRoot,parent,xml):
-		XmlBackedObject.__init__(self,docRoot,parent,xml)
+		SmartimageXmlBackedObject.__init__(self,docRoot,parent,xml)
 		
 	@property
 	def children(self):

@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <smartimage>
 	<!-- Combine details of one image with another -->
 	<numberspace name="recombine" blendMode="add" invert="true">	

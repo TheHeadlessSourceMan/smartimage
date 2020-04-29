@@ -4,22 +4,22 @@
 	<!-- FIRST ROW -->
 	
 	<solid name="solid color" color="#00AA00" w="200" h="200" x="0" y="0" />
-	<texture name="clouds" type="clouds" w="200" h="200" x="200" y="0" />
-	<texture name="marble" noise="0.25" direction="45" frequency="15,15" w="200" h="200" x="400" y="0" />
-	<texture name="wood" noise="0.15" direction="circular" frequency="12" w="200" h="200" x="600" y="0" />
+	<texture name="clouds" seed="10354484" type="clouds" w="200" h="200" x="200" y="0" />
+	<texture name="marble" seed="10354484" noise="0.25" direction="45" frequency="15,15" w="200" h="200" x="400" y="0" />
+	<texture name="wood" seed="10354484" noise="0.15" direction="circular" frequency="12" w="200" h="200" x="600" y="0" />
 	
 	<!-- SECOND ROW -->
 	
-	<texture name="sphere" noise="0" direction="circular" frequency="0.5" w="200" h="200" x="0" y="200" />
-	<texture name="cell noise" type="voronoi" w="200" h="200" x="200" y="200" />
-	<texture name="blobs" type="voronoi" invert="true" w="200" h="200" x="400" y="200" />
-	<texture name="light beam" type="clock" noise="0" angle="45" waveform="sine" w="200" h="200" x="600" y="200" />
+	<texture name="sphere" seed="10354484" noise="0" direction="circular" frequency="0.5" w="200" h="200" x="0" y="200" />
+	<texture name="cell noise" seed="10354484" type="voronoi" w="200" h="200" x="200" y="200" />
+	<texture name="blobs" seed="10354484" type="voronoi" invert="true" w="200" h="200" x="400" y="200" />
+	<texture name="light beam" seed="10354484" type="clock" noise="0" angle="45" waveform="sine" w="200" h="200" x="600" y="200" />
 	
 	<!-- THIRD ROW -->
 	
-	<texture name="sin" eaveform="sin" frequency="15,15" w="200" h="200" x="0" y="400" />
-	<texture name="saw" waveform="saw" frequency="15,15" w="200" h="200" x="200" y="400" />
-	<texture name="tri" waveform="tri" frequency="15,15" w="200" h="200" x="400" y="400" />
-	<texture name="clock" type="clock" noise="0" angle="45" waveform="saw" w="200" h="200" x="600" y="400" />
+	<texture name="sin" seed="10354484" eaveform="sin" frequency="15,15" w="200" h="200" x="0" y="400" />
+	<texture name="saw" seed="10354484" waveform="saw" frequency="15,15" w="200" h="200" x="200" y="400" />
+	<texture name="tri" seed="10354484" waveform="tri" frequency="15,15" w="200" h="200" x="400" y="400" />
+	<texture name="clock" seed="10354484" type="clock" noise="0" angle="45" waveform="saw" w="200" h="200" x="600" y="400" />
 	
 </smartimage>

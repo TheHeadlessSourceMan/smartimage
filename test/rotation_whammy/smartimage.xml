@@ -1,5 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <smartimage>
 	<group rotate="-45">
-		<image rotate="45" file="../rice.jpg" />
+		<image rotate="45" src="../rice.jpg" />
 	</group>
 </smartimage>

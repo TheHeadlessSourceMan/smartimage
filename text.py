@@ -1,15 +1,18 @@
-#!/usr/bin/env
 # -*- coding: utf-8 -*-
 """
 This is a text layer
 """
 import os
 import struct
-import urllib,urllib2
+import urllib.request
+import urllib.parse
+import urllib.error
 import textwrap
-from PIL import ImageFont, ImageDraw
+from PIL import Image,ImageFont,ImageDraw
 import lxml.etree
-from layer import *
+from imageTools import *
+from smartimage.layer import Layer
+from smartimage.errors import SmartimageError
 
 
 # TODO: select based on OS
@@ -18,323 +21,279 @@ DEFAULT_FONT=r'c:\windows\fonts\arial.ttf'
 #DEFAULT_FONT='sans-serif'
 
 
-def fontSquirrelGet(fontName,cacheDir):
-	"""
-	get a font from fontsquirrel
+def fontSquirrelGet(fontName:str,cacheDir:str):
+    """
+    get a font from fontsquirrel
 
-	:param fontName: the named font to fetch
-	:param cacheDir: the location to cache fonts
-	"""
-	fontName=fontName.replace(' ','-')
-	url='https://www.fontsquirrel.com/fonts/download/'+fontName
-	req=urllib2.Request(url)
-	try:
-		response=urllib2.urlopen(req)
-		print dir(response)
-		raise NotImplementedError()
-		f=open(fontcache,'wb')
-		f.write(response.read())
-		f.close()
-	except urllib2.URLError,e:
-		print url
-		print e
+    :param fontName: the named font to fetch
+    :param cacheDir: the location to cache fonts
+    """
+    fontName=fontName.replace(' ','-')
+    url='https://www.fontsquirrel.com/fonts/download/'+fontName
+    req=urllib.request.Request(url)
+    try:
+        response=urllib.request.urlopen(req)
+        f=open(fontcache,'wb')
+        f.write(response.read())
+        f.close()
+    except urllib.error.URLError as e:
+        print(url)
+        print(e)
 
 
-def fontSquirrelPage(fontName,cacheDir):
-	"""
-	get the page for a fontsquirrel font
+def fontSquirrelPage(fontName:str,cacheDir:str):
+    """
+    get the page for a fontsquirrel font
 
-	:param fontName: the named font to fetch
-	:param cacheDir: the location to cache fonts
-	"""
-	fontName=fontName.replace(' ','-')
-	url='https://www.fontsquirrel.com/fonts/'+fontName
-	ret=None
-	req=urllib2.Request(url)
-	try:
-		response=urllib2.urlopen(req)
-		ret=response.read()
-	except urllib2.URLError,e:
-		print url
-		print e
-	return ret
-
-
-def fontSquirrelLicense(fontName,cacheDir):
-	"""
-	Retrieve the license for the given font as html
-
-	:param fontName: the named font to fetch
-	:param cacheDir: the location to cache fonts
-	"""
-	page=fontSquirrelPage(fontName,cacheDir)
-	if page is None:
-		return None
-	page=lxml.etree(page)
-	return lxml.xpath('//*[@id="panel_eula"]')[0]
+    :param fontName: the named font to fetch
+    :param cacheDir: the location to cache fonts
+    """
+    fontName=fontName.replace(' ','-')
+    url='https://www.fontsquirrel.com/fonts/'+fontName
+    ret=None
+    req=urllib.request.Request(url)
+    try:
+        response=urllib.request.urlopen(req)
+        ret=response.read()
+    except urllib.error.URLError as e:
+        print(url)
+        print(e)
+    return ret
 
 
-def googleFontsGet(fontName,cacheDir):
-	"""
-	download the font from google fonts
+def fontSquirrelLicense(fontName:str,cacheDir:str):
+    """
+    Retrieve the license for the given font as html
 
-	:param fontName: the named font to fetch
-	:param cacheDir: the location to cache fonts
-	"""
-	font=None
-	# try to download from google fonts
-	fontcache=cacheDir+fontName
-	if not os.path.exists(fontcache):
-		# download the info file if we don't have one
-		url='https://fonts.googleapis.com/css?family='+urllib.quote_plus(fontName)
-		req=urllib2.Request(url)
-		try:
-			response=urllib2.urlopen(req)
-			f=open(fontcache,'wb')
-			f.write(response.read())
-			f.close()
-		except urllib2.URLError,e:
-			print url
-			print e
-	if os.path.exists(fontcache):
-		# peek in the info file and get the real url
-		f=open(fontcache,'rb')
-		url=f.read().split('url(',1)[-1].split(')',1)[0]
-		f.close()
-		fontcache=cacheDir+urllib.quote_plus(url)
-		if not os.path.exists(fontcache):
-			# download the real font if we don't already have it
-			req=urllib2.Request(url)
-			try:
-				response=urllib2.urlopen(req)
-				f=open(fontcache,'wb')
-				f.write(response.read())
-				f.close()
-			except urllib2.URLError,e:
-				print url
-				print e
-		font=fontcache
-	return font
+    :param fontName: the named font to fetch
+    :param cacheDir: the location to cache fonts
+    """
+    page=fontSquirrelPage(fontName,cacheDir)
+    if page is None:
+        return None
+    page=lxml.etree.fromstring(page)
+    return page.xpath('//*[@id="panel_eula"]')[0]
 
-def downloadFont(fontName):
-	"""
-	locate and download the named font
 
-	:param fontName: the named font to fetch
-	"""
-	cacheDir=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep+'font_cache'+os.sep
-	font=googleFontsGet(fontName,cacheDir)
-	# TODO: fontsquirrel not implemented
-	#if font is None:
-	#	font=fontSquirrelGet(fontName,cacheDir)
-	return font
+def googleFontsGet(fontName:str,cacheDir:str):
+    """
+    download the font from google fonts
+
+    :param fontName: the named font to fetch
+    :param cacheDir: the location to cache fonts
+    """
+    font=None
+    # try to download from google fonts
+    fontcache=cacheDir+fontName
+    if not os.path.exists(fontcache):
+        # download the info file if we don't have one
+        url='https://fonts.googleapis.com/css?family='+urllib.parse.quote_plus(fontName)
+        req=urllib.request.Request(url)
+        try:
+            response=urllib.request.urlopen(req)
+            f=open(fontcache,'wb')
+            f.write(response.read())
+            f.close()
+        except urllib.error.URLError as e:
+            print(url)
+            print(e)
+    if os.path.exists(fontcache):
+        # peek in the info file and get the real url
+        f=open(fontcache,'rb')
+        url=f.read().decode('utf-8').split('url(',1)[-1].split(')',1)[0]
+        f.close()
+        fontcache=cacheDir+urllib.parse.quote_plus(url)
+        if not os.path.exists(fontcache):
+            # download the real font if we don't already have it
+            req=urllib.request.Request(url)
+            try:
+                response=urllib.request.urlopen(req)
+                f=open(fontcache,'wb')
+                f.write(response.read())
+                f.close()
+            except urllib.error.URLError as e:
+                print(url)
+                print(e)
+        font=fontcache
+    return font
+
+def downloadFont(fontName:str):
+    """
+    locate and download the named font
+
+    :param fontName: the named font to fetch
+    """
+    cacheDir=os.path.abspath(__file__).rsplit(os.sep,1)[0]+os.sep+'font_cache'+os.sep
+    font=googleFontsGet(fontName,cacheDir)
+    # TODO: fontsquirrel not implemented
+    #if font is None:
+    #\tfont=fontSquirrelGet(fontName,cacheDir)
+    return font
 
 
 class TextLayer(Layer):
-	"""
-	This is a text layer
-	"""
+    """
+    This is a text layer
+    """
 
-	def __init__(self,docRoot,parent,xml):
-		Layer.__init__(self,docRoot,parent,xml)
-		self._font=None
+    def __init__(self,parent:Layer,xml:str):
+        Layer.__init__(self,parent,xml)
+        self._font=None
 
-	@property
-	def fontName(self):
-		"""
-		get the font name
-		"""
-		return self._getProperty('font',None)
-	@property
-	def fontSize(self):
-		"""
-		get the font size
-		"""
-		return int(self._getProperty('fontSize',24))
-	@property
-	def typeFace(self):
-		"""
-		get the tupe face
-		"""
-		return int(self._getProperty('typeFace',0))
-	@property
-	def color(self):
-		"""
-		get the color of the text
-		"""
-		return self._getProperty('color','#000000')
+    @property
+    def fontName(self)->str:
+        """
+        get the font name
+        """
+        return self._getProperty('font',None)
+    @property
+    def fontSize(self)->int:
+        """
+        get the font size
+        """
+        return int(self._getProperty('fontSize',24))
+    @property
+    def typeFace(self):
+        """
+        get the type face
+        """
+        return int(self._getProperty('typeFace',0))
 
-	@property
-	def rgba(self):
-		"""
-		always returns an rgba[], regardless of color being:
-			#FFFFFF
-			#FFFFFFFF
-			rgb(128,12,23)
-			rgba(234,33,23,0)
-		"""
-		s=self.color
-		if s.find('(')>=0:
-			ret=[int(c.strip()) for c in s.split('(',1)[-1].rsplit(')',1)[0].split(',')]
-		else:
-			format='B'*int(len(s)/2)
-			ret=[c for c in struct.unpack(format,s.split('#',1)[-1].decode('hex'))]
-		while len(ret)<3:
-			ret.append(ret[0])
-		if len(ret)<4:
-			ret.append(255)
-		return tuple(ret)
+    @property
+    def color(self):
+        """
+        get the background color
+        """
+        return strToColor(self._getProperty('color','#000000'))
+    @color.setter
+    def color(self,color):
+        if not isinstance(color,str):
+            color=colorToStr(color)
+        self._setProperty('color',color)
 
-	@property
-	def anchor(self):
-		"""
-		get the anchor point
-		"""
-		return self._getProperty('anchor','left')
-	@property
-	def lineSpacing(self):
-		"""
-		get the spacing between repeats
-		"""
-		return int(self._getProperty('lineSpacing',0))
-	@property
-	def align(self):
-		"""
-		get the horizontal alignment
-		"""
-		return self._getProperty('align','left')
-	@property
-	def verticalAlign(self):
-		"""
-		get the vertical alignment
-		"""
-		return self._getProperty('verticalAlign','top')
+    @property
+    def anchor(self)->str:
+        """
+        get the anchor point
+        """
+        return self._getProperty('anchor','left')
+    @property
+    def lineSpacing(self)->int:
+        """
+        get the spacing between repeats
+        """
+        return int(self._getProperty('lineSpacing',0))
+    @property
+    def align(self)->str:
+        """
+        get the horizontal alignment
+        """
+        return self._getProperty('align','left')
+    @property
+    def verticalAlign(self)->str:
+        """
+        get the vertical alignment
+        """
+        return self._getProperty('verticalAlign','top')
 
-	@property
-	def font(self):
-		"""
-		change to any TrueType or OpenType font
+    @property
+    def font(self)->str:
+        """
+        change to any TrueType or OpenType font
 
-		TODO: check inside the zipfile for embedded fonts!
+        TODO: check inside the zipfile for embedded fonts!
 
-		if the font is installed on your system, will attempt to install it from
-			fonts.google.com
+        if the font is installed on your system, will attempt to install it from
+            fonts.google.com
 
-		returns PIL font object
-		"""
-		if self.fontName!=None:
-			fontName=self.fontName
-		else:
-			fontName=DEFAULT_FONT
-		if self._font is None:
-			# first look in the zipped file
-			for name in self.docRoot.componentNames:
-				name=name.rsplit('.',1)
-				if name[0]==fontName:
-					if len(name)==1 or name[1] in ['ttf','otf','otc','ttc']:
-						name='.'.join(name)
-						self._font=ImageFont.truetype(self.docRoot.getComponent(name),self.fontSize,self.typeFace)
-						break
-		if self._font is None:
-			# try the os
-			try:
-				self._font=ImageFont.truetype(fontName,self.fontSize,self.typeFace)
-			except IOError:
-				self._font=None
-		if self._font is None:
-			fontdata=downloadFont(fontName)
-			if fontdata!=None:
-				self._font=ImageFont.truetype(fontdata,self.fontSize,self.typeFace)
-		if self._font is None:
-			raise Exception('Cannot find font anywhere: "'+fontName+'"')
-		return self._font
+        returns PIL font object
+        """
+        if self.fontName is not None:
+            fontName=self.fontName
+        else:
+            fontName=DEFAULT_FONT
+        if self._font is None:
+            # first look in the zipped file
+            for name in self.root.componentNames:
+                name=name.rsplit('.',1)
+                if name[0]==fontName:
+                    if len(name)==1 or name[1] in ['ttf','otf','otc','ttc']:
+                        name='.'.join(name)
+                        component=self.root.getComponent(name)
+                        self._font=ImageFont.truetype(component,self.fontSize,self.typeFace)
+                        component.close()
+                        break
+        if self._font is None:
+            # try the os
+            try:
+                self._font=ImageFont.truetype(fontName,self.fontSize,self.typeFace)
+            except IOError:
+                self._font=None
+        if self._font is None:
+            fontdata=downloadFont(fontName)
+            if fontdata is not None:
+                self._font=ImageFont.truetype(fontdata,self.fontSize,self.typeFace)
+        if self._font is None:
+            raise SmartimageError(self,'Cannot find font anywhere: "%s"'%fontName)
+        return self._font
 
-	@property
-	def roi(self):
-		img=Image.new('L',self.size,0)
-		d=ImageDraw.Draw(img)
-		d.multiline_text((0,0),self.text,255,self.font,self.anchor,self.lineSpacing,self.align)
-		return img
+    @property
+    def roi(self)->PilPlusImage:
+        img=PilPlusImage(Image.new('L',self.size,0))
+        d=ImageDraw.Draw(img)
+        d.multiline_text((0,0),self.text,255,self.font,self.anchor,self.lineSpacing,self.align)
+        return img
 
-	@property
-	def image(self):
-		text=self.text
-		# create a fake image, ImageDraw to use for size calculation
-		img=Image.new('L',(1,1))
-		d=ImageDraw.Draw(img)
-		# some sanity checking
-		if len(text)<1:
-			print 'WARN: Layer "'+self.name+'" has no text specified'
-			return None
-		if self.w==0:
-			size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
-			w,h=size
-		else:
-			# determine the text wrapping and final size
-			w=self.w
-			textWrapper=textwrap.TextWrapper()
-			charSize=d.textsize('l',font=self.font,spacing=self.lineSpacing)[0]
-			textWrapper.width=int(w/len(text)*charSize)
-			size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
-			while size[0]>w and textWrapper.width>0:
-				textWrapper.width-=1
-				text=textWrapper.fill(self.text)
-				size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
-			h=max(size[1],self.h)
-		# determine vertical alignment position
-		x=self.x
-		y=self.y
-		align=self.align
-		verticalAlign=self.verticalAlign
-		if verticalAlign=='top':
-			pass
-		elif verticalAlign=='bottom':
-			y+=h-size[1]
-		elif verticalAlign in ['center','middle']:
-			y+=h/2-size[1]/2
-		else:
-			raise Exception('ERR: Unknown text vertical alignment mode "'+verticalAlign+'"')
-		if align=='left':
-			pass
-		elif align=='right':
-			x+=w-size[0]
-		elif align in ['center','middle']:
-			x+=w/2-size[0]/2
-		else:
-			raise Exception('ERR: Unknown text alignment mode "'+align+'"')
-		# draw the stuff
-		img=Image.new('RGBA',(int(x+w),int(y+h)),(128,128,128,0))
-		d=ImageDraw.Draw(img)
-		d.multiline_text((x,y),text,self.color,self.font,
-			self.anchor,self.lineSpacing,self.align)
-		return img
-
-
-if __name__ == '__main__':
-	import sys
-	# Use the Psyco python accelerator if available
-	# See:
-	# 	http://psyco.sourceforge.net
-	try:
-		import psyco
-		psyco.full() # accelerate this program
-	except ImportError:
-		pass
-	printhelp=False
-	if len(sys.argv)<2:
-		printhelp=True
-	else:
-		for arg in sys.argv[1:]:
-			if arg.startswith('-'):
-				arg=[a.strip() for a in arg.split('=',1)]
-				if arg[0] in ['-h','--help']:
-					printhelp=True
-				else:
-					print 'ERR: unknown argument "'+arg[0]+'"'
-			else:
-				print 'ERR: unknown argument "'+arg+'"'
-	if printhelp:
-		print 'Usage:'
-		print '  text.py [options]'
-		print 'Options:'
-		print '   NONE'
+    @property
+    def image(self)->PilPlusImage:
+        text=self.text
+        # create a fake image, ImageDraw to use for size calculation
+        img=Image.new('L',(1,1))
+        d=ImageDraw.Draw(img)
+        # some sanity checking
+        if not text:
+            info=(self.name,self.root.filename,self.xml.sourceline)
+            print('WARN: Layer "%s" has no text specified - %s line %d'%info)
+            return None
+        if self.w==0:
+            size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
+            w,h=size
+        else:
+            # determine the text wrapping and final size
+            w=self.w
+            textWrapper=textwrap.TextWrapper()
+            charSize=d.textsize('l',font=self.font,spacing=self.lineSpacing)[0]
+            textWrapper.width=int(w/len(text)*charSize)
+            size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
+            while size[0]>w and textWrapper.width>0:
+                textWrapper.width-=1
+                text=textWrapper.fill(self.text)
+                size=d.textsize(text,font=self.font,spacing=self.lineSpacing)
+            h=max(size[1],self.h)
+        # determine vertical alignment position
+        x=self.x
+        y=self.y
+        align=self.align
+        verticalAlign=self.verticalAlign
+        if verticalAlign=='top':
+            pass
+        elif verticalAlign=='bottom':
+            y+=h-size[1]
+        elif verticalAlign in ['center','middle']:
+            y+=h/2-size[1]/2
+        else:
+            raise SmartimageError(self,'ERR: Unknown text vertical align mode "%s"'%verticalAlign)
+        if align=='left':
+            pass
+        elif align=='right':
+            x+=w-size[0]
+        elif align in ['center','middle']:
+            x+=w/2-size[0]/2
+        else:
+            raise SmartimageError(self,'Unknown text alignment mode "%s"'%align)
+        # draw the stuff
+        img=Image.new('RGBA',(int(w),int(h)),(128,128,128,0))
+        d=ImageDraw.Draw(img)
+        d.multiline_text((0,0),text,tuple(self.color),self.font,
+            self.anchor,self.lineSpacing,self.align)
+        return img

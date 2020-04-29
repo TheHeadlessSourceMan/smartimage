@@ -1,4 +1,5 @@
-<smartimage id="0">
-	<image id="1" file="../picnic.jpg" />
-	<text id="2" font="Hi Melody" x="10" y="-10" color="#ff00ff">Hello world</text>
+<?xml version='1.0' encoding='UTF-8'?>
+<smartimage>
+	<text font="Hi Melody" x="470" y="200" fontSize="50" color="#ff00ff">Family Outing</text>
+	<image src="../picnic.jpg" />
 </smartimage>

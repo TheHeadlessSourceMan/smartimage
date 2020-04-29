@@ -1,5 +1,5 @@
 ﻿[PyScripter]
-Version=3.4.2.0
+Version=3.6.3.0
 
 [Project]
 ClassName=TProjectRootNode
@@ -11,178 +11,368 @@ ClassName=TProjectFilesNode
 
 [Project\ChildNodes\Node0\ChildNodes\Node0]
 ClassName=TProjectFolderNode
-Name=imgTools
+Name=backedObject
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node0]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\__init__.py
+FileName=C:\backed_up\computers\programming\backedObject\backed.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node1]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\autoInterest.py
+FileName=C:\backed_up\computers\programming\backedObject\backedDocument.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node2]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\backgrounds.py
+FileName=C:\backed_up\computers\programming\backedObject\backedList.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node3]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\bounds.py
+FileName=C:\backed_up\computers\programming\backedObject\backedObject.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node4]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\colorCorrect.py
+FileName=C:\backed_up\computers\programming\backedObject\backedValue.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node5]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\colors.py
+FileName=C:\backed_up\computers\programming\backedObject\csvBackedList.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node6]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\colorSpaces.py
+FileName=C:\backed_up\computers\programming\backedObject\descriptorBase.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node7]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\compositor.py
+FileName=C:\backed_up\computers\programming\backedObject\filteredList.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node8]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\convolution.py
+FileName=C:\backed_up\computers\programming\backedObject\hasDescriptors.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node9]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\gradients.py
+FileName=C:\backed_up\computers\programming\backedObject\mirroredObject.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node10]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\helper_routines.py
+FileName=C:\backed_up\computers\programming\backedObject\playground.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node11]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\imageRepr.py
+FileName=C:\backed_up\computers\programming\backedObject\reBackedObject.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node12]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\morphology.py
+FileName=C:\backed_up\computers\programming\backedObject\typeHinted.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node13]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\numberSpaces.py
+FileName=C:\backed_up\computers\programming\backedObject\watchableObject.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node14]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\pilPlus.py
+FileName=C:\backed_up\computers\programming\backedObject\xmlBackedDocument.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node15]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\proceduralTextures.py
+FileName=C:\backed_up\computers\programming\backedObject\xmlBackedList.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node16]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\pseudo3d.py
+FileName=C:\backed_up\computers\programming\backedObject\xmlBackedObject.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node17]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\resizing.py
+FileName=C:\backed_up\computers\programming\backedObject\xmlBackedObject1.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node18]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]imgTools\selectionsAndPaths.py
+FileName=C:\backed_up\computers\programming\backedObject\xmlBackedObject3.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes\Node19]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\backedObject\xmlBackedValue.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node0\ChildNodes]
-Count=19
+Count=20
 
 [Project\ChildNodes\Node0\ChildNodes\Node1]
+ClassName=TProjectFolderNode
+Name=imageTools
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node0]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]__init__.py
+FileName=C:\backed_up\computers\programming\imageTools\autoInterest.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node1]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\backgrounds.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node2]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\bounds.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node3]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\colorTools\color.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node4]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\colorCorrect.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node5]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\colors.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node6]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\colorSpaces.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node7]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\compositor.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node8]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\convolution.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node9]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\distort.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node10]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\featureFinder.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node11]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\fill.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node12]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\gradients.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node13]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\helper_routines.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node14]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\imageRepr.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node15]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\kernelFunction.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node16]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\measurements.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node17]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\morphology.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node18]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\neural.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node19]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\numberSpaces.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node20]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\pilPlus.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node21]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\proceduralTextures.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node22]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\pseudo3d.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node23]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\resizing.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes\Node24]
+ClassName=TProjectFileNode
+FileName=C:\backed_up\computers\programming\imageTools\selectionsAndPaths.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node1\ChildNodes]
+Count=25
 
 [Project\ChildNodes\Node0\ChildNodes\Node2]
+ClassName=TProjectFolderNode
+Name=test
+
+[Project\ChildNodes\Node0\ChildNodes\Node2\ChildNodes\Node0]
+ClassName=TProjectFolderNode
+Name=New Folder
+
+[Project\ChildNodes\Node0\ChildNodes\Node2\ChildNodes\Node0\ChildNodes\Node0]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]extension.py
+FileName=$[Project-Path]test\collage\test.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node2\ChildNodes\Node0\ChildNodes\Node1]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]test\grayscale_tests\test.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node2\ChildNodes\Node0\ChildNodes]
+Count=2
+
+[Project\ChildNodes\Node0\ChildNodes\Node2\ChildNodes\Node1]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]test\test.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node2\ChildNodes]
+Count=2
 
 [Project\ChildNodes\Node0\ChildNodes\Node3]
+ClassName=TProjectFolderNode
+Name=ui
+
+[Project\ChildNodes\Node0\ChildNodes\Node3\ChildNodes\Node0]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]form.py
+FileName=$[Project-Path]ui\tkLightweightUI.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node3\ChildNodes\Node1]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]ui\tkVarsWindow.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node3\ChildNodes]
+Count=2
 
 [Project\ChildNodes\Node0\ChildNodes\Node4]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]frame.py
+FileName=$[Project-Path]__init__.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node5]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]image.py
+FileName=$[Project-Path]_smartimage.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node6]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]layer.py
+FileName=$[Project-Path]bounds.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node7]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]link.py
+FileName=$[Project-Path]createSmartimage.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node8]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]modifier.py
+FileName=$[Project-Path]errors.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node9]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]normals.py
+FileName=$[Project-Path]extension.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node10]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]numberspace.py
+FileName=$[Project-Path]form.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node11]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]page.py
+FileName=$[Project-Path]frame.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node12]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]particles.py
+FileName=$[Project-Path]image.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node13]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]pattern.py
+FileName=$[Project-Path]layer.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node14]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]setup.py
+FileName=$[Project-Path]link.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node15]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]smartimage.py
+FileName=$[Project-Path]modifier.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node16]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]solid.py
+FileName=$[Project-Path]normals.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node17]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]text.py
+FileName=$[Project-Path]numberspace.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node18]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]texture.py
+FileName=$[Project-Path]page.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node19]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]xmlBackedList.py
+FileName=$[Project-Path]particles.py
 
 [Project\ChildNodes\Node0\ChildNodes\Node20]
 ClassName=TProjectFileNode
-FileName=$[Project-Path]xmlBackedObject.py
+FileName=$[Project-Path]pattern.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node21]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]renderingContext.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node22]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]setup.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node23]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]smartimageXmlObject.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node24]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]solid.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node25]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]text.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node26]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]texture.py
+
+[Project\ChildNodes\Node0\ChildNodes\Node27]
+ClassName=TProjectFileNode
+FileName=$[Project-Path]variable.py
 
 [Project\ChildNodes\Node0\ChildNodes]
-Count=21
+Count=28
 
 [Project\ChildNodes\Node1]
 ClassName=TProjectRunConfiguationsNode
+
+[Project\ChildNodes\Node1\ChildNodes\Node0]
+ClassName=TProjectRunConfiguationNode
+Name=coverage
+
+[Project\ChildNodes\Node1\ChildNodes\Node0\RunConfig]
+ScriptName=C:\backed_up\computers\formats\smartimage\test\test.py
+Description=coverage tests
+EngineType=peRemote
+ReinitializeBeforeRun=TRUE
+WorkingDir=$[ActiveScript-Dir]
+WriteOutputToFile=FALSE
+OutputFileName=$[ActiveScript-NoExt].log
+AppendToFile=FALSE
+
+[Project\ChildNodes\Node1\ChildNodes\Node0\RunConfig\ExternalRun]
+Caption=External Run
+Description=Run script using an external Python Interpreter
+ApplicationName=$[PythonExe-Short] -m coverage run
+Parameters=$[ActiveScript-Short]
+WorkingDirectory=$[ActiveScript-Dir]
+
+[Project\ChildNodes\Node1\ChildNodes]
+Count=1
 
 [Project\ChildNodes]
 Count=2
 
 [Project\ExtraPythonPath]
-Item0=C:\backed_up\computers\formats\smartimage\imgTools
-Item1=C:\backed_up\computers\formats\smartimage
-Count=2
+Count=0
 

@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<smartimage>
+	<image src="../rice.jpg" mask="nonExistantFile.jpg" />
+</smartimage>

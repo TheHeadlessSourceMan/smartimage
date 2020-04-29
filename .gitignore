@@ -6,3 +6,5 @@
 /svg/*.pyc
 *.odt#
 *.pyc
+**/actualOutput.png
+/test/htmlcov

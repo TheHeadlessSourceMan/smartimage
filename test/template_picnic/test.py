@@ -25,7 +25,7 @@ class Test(unittest.TestCase):
 		
 	def testName(self):
 		self.dut.load(__HERE__)
-		#self.dut.save(__HERE__+'desiredOutput.png') # generate desired output baseline
+		self.dut.save(__HERE__+'actualOutput.png')
 		same=self.dut.compareOutput(__HERE__+'desiredOutput.png')
 		assert same
 

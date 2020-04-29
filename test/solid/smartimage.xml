@@ -1,3 +1,4 @@
-<smartimage id="0">
-	<solid id="1" color="#00AA00" w="860" h="529" />
+<?xml version='1.0' encoding='UTF-8'?>
+<smartimage id="smartimage">
+	<solid id="mySolid" color="#00AA00" w="860" h="529" />
 </smartimage>

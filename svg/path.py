@@ -3,7 +3,7 @@
 """
 A single svg path
 """
-from xmlBackedObject import XmlBackedObject
+from backedObject import SmartimageXmlBackedObject
 
 
 def samplePath():
@@ -16,13 +16,13 @@ def samplePath():
 	return Path(None,None,xml)
 
 	   
-class Path(XmlBackedObject):
+class Path(SmartimageXmlBackedObject):
 	"""
 	A single svg path
 	"""
 	
 	def __init__(self,doc,parent,xml):
-		XmlBackedObject.__init__(self,doc,parent,xml)
+		SmartimageXmlBackedObject.__init__(self,doc,parent,xml)
 		
 	@property
 	def style(self):
@@ -78,7 +78,7 @@ class Path(XmlBackedObject):
 			isRelative=tape[i].islower()
 			command=tape[i].lower()
 			i+=1
-			if command=='m':
+			if command=='m': # move
 				while i<len(tape) and not tape[i][0].isalpha():
 					point=decodePoint(tape[i])
 					i+=1
@@ -86,7 +86,7 @@ class Path(XmlBackedObject):
 						point=rel2abs(point)
 					moveToFn(context,point)
 					current=point
-			elif command=='l':
+			elif command=='l': #lineTo
 				while i<len(tape) and not tape[i][0].isalpha():
 					point=decodePoint(tape[i])
 					i+=1
@@ -110,7 +110,7 @@ class Path(XmlBackedObject):
 						point=rel2abs(point)
 					lineToFn(context,point)
 					current=point
-			elif command=='c':
+			elif command=='c': # curveTo
 				while i<len(tape) and not tape[i][0].isalpha():
 					cp1=decodePoint(tape[i])
 					i+=1
@@ -174,7 +174,7 @@ class Path(XmlBackedObject):
 					arcFn(context,point,radius,xAxisRotation,largeArcFlag,sweepFlag)
 					current=point
 			elif command=='z':
-				if closePathFn!=None:
+				if closePathFn is not None:
 					closePathFn(context)
 			else:
 				raise Exception('Unknown svg path command, "'+command+'" in "'+self.d+'"')
@@ -203,7 +203,7 @@ if __name__ == '__main__':
 				elif arg[0]=='--samplePath':
 					path=samplePath()
 					def log(name,*args):
-						print '+',name,args
+						print('+',name,args)
 					def moveToFn(*args):
 						log('moveTo',args)
 					def lineToFn(*args):
@@ -218,11 +218,11 @@ if __name__ == '__main__':
 						log('closePathFn',*args)
 					path._decode(None,moveToFn,lineToFn,cubicBezierFn,quadraticBezierFunction,arcFn,closePathFn)
 				else:
-					print 'ERR: unknown argument "'+arg[0]+'"'
+					print('ERR: unknown argument "'+arg[0]+'"')
 			else:
-				print 'ERR: unknown argument "'+arg+'"'
+				print('ERR: unknown argument "'+arg+'"')
 	if printhelp:
-		print 'Usage:'
-		print '  path.py [options]'
-		print 'Options:'
-		print '   NONE'
+		print('Usage:')
+		print('  path.py [options]')
+		print('Options:')
+		print('   NONE')

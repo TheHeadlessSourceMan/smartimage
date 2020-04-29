@@ -1,2 +1,2 @@
-import tkLightweightUI
-import tkVarsWindow
+from . import tkLightweightUI
+from . import tkVarsWindow
