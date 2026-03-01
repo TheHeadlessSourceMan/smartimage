@@ -1,6 +1,7 @@
 """
 a variable used to hold values
 """
+import typing
 from smartimage.smartimageXmlObject import SmartimageXmlObject
 
 
@@ -28,11 +29,12 @@ class Variable(SmartimageXmlObject):
         return self._getProperty('description','')
 
     @property
-    def uitype(self)->str:
+    def uiType(self)->str:
         """
         an html input type like:
             (checkbox color date datetime datetime-local email file hidden
-            image month number password radio range search tel text time url week )
+            image month number password radio range search tel text time
+            url week )
         """
         return self._getProperty('type','text')
     @property
@@ -40,17 +42,17 @@ class Variable(SmartimageXmlObject):
         """
         the ui type of this variable
         """
-        return self.uitype
+        return self.uiType
 
     @property
-    def default(self):
+    def default(self)->typing.Any:
         """
         default value for this variable
         """
         return self._getProperty('default','')
 
     @property
-    def value(self):
+    def value(self)->typing.Any:
         """
         the current value of this variable
         """

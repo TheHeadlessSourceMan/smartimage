@@ -2,9 +2,9 @@
 """
 This is an object backed by xml data
 """
-from typing import *
-from backedObject import *
-from smartimage.errors import *
+import typing
+from backedObject import XmlBackedObject
+from smartimage.errors import SmartimageError
 
 
 class SmartimageXmlObject(XmlBackedObject):
@@ -12,7 +12,10 @@ class SmartimageXmlObject(XmlBackedObject):
     This is an object backed by xml data
     """
 
-    def __init__(self,parent:Union['SmartimageXmlObject',None],xml:str):
+    def __init__(self,
+        parent:typing.Union['SmartimageXmlObject',None],
+        xml:str):
+        """ """
         if xml is None:
             raise Exception()
         XmlBackedObject.__init__(self,parent,None,xml)
@@ -29,16 +32,21 @@ class SmartimageXmlObject(XmlBackedObject):
             ret='Layer '+str(self.elementId)
         return ret
     @name.setter
-    def name(self,name):
+    def name(self,name:str):
         """
         the friendly, viewable name of this layer
         """
         self._setProperty('name',name)
 
-    def _fixValueResults(self,value,xob,nameHint):
+    def _fixValueResults(self,
+        value:typing.Any,
+        xob:typing.Any,
+        nameHint:str
+        )->typing.Any:
         """
-        Whenever a value is read from the file, we'll run it through this function
-        before returning.  This way special magic values can be implemented.
+        Whenever a value is read from the file, we'll run it through
+        this function before returning.  This way special
+        magic values can be implemented.
 
         Probably best to avoid using this if at all possible.
         """
@@ -48,7 +56,7 @@ class SmartimageXmlObject(XmlBackedObject):
                 value=getattr(xob,nameHint)
         return value
 
-    def getVariableValue(self,name:str):
+    def getVariableValue(self,name:str)->typing.Any:
         """
         get the value of the variable
         """
@@ -63,11 +71,15 @@ class SmartimageXmlObject(XmlBackedObject):
             return None
         return val.getattr('value')
 
-    def _dereference(self,name:str,nameHint='',default=None,nofollow=None):
+    def _dereference(self,
+        name:str,
+        nameHint:str='',
+        default:typing.Any=None,
+        nofollow:typing.Optional[typing.Iterable]=None):
         """
         :param name: the name to dereference
-        :param nameHint: the attribute in the original object that we got name from
-            (or '_' = text contents)
+        :param nameHint: the attribute in the original object
+            that we got name from (or '_' = text contents)
         """
         newVal=name
         xob=None
@@ -83,7 +95,7 @@ class SmartimageXmlObject(XmlBackedObject):
             # --- search by Id
             idFind=name[1:].split('.',1)
             idFind.append(nameHint)
-            newVal=None
+            newVal:typing.Any=None
             if newVal is None:
                 xob=self.root.getLayer(idFind[0])
                 if xob is not None:
@@ -124,14 +136,14 @@ class SmartimageXmlObject(XmlBackedObject):
         """
         self.xml.attrib[name]=str(value)
 
-    def _getProperty(self,name:str,default=None):
+    def _getProperty(self,name:str,default:typing.Any=None)->typing.Any:
         """
         name - retrieve this property from the xml attributes
         default - if there is no attribute, return this instead
             (can be a link or replacement)
         Optional:
-            You can also have a replacement value that is a link, or a link that
-            points to a replacement value.
+            You can also have a replacement value that is a link,
+            or a link that points to a replacement value.
         """
         if callable(default):
             default=default()
